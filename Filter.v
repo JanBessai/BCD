@@ -291,6 +291,12 @@ Module Types.
         inversion ωn.
       Qed.
 
+      Fact InterSym { σ τ }: σ ∩ τ ≤ τ ∩ σ.
+      Proof.
+        apply (transitivity InterIdem).
+        apply SubtyDistrib; auto.
+      Qed.
+
       Lemma Beta_Omega:
         forall σ τ, ω ~ σ → τ <-> ω ~ τ.
       Proof.
@@ -304,13 +310,13 @@ Module Types.
       Qed.
 
       Reserved Notation "↑α[ n ] σ " (at level 89).
-      Inductive VariableSuperset (n : nat): IntersectionType -> Prop :=
-        | V_Var : ↑α[n] (Var n)
-        | V_Omega : forall σ, σ ~ ω -> ↑α[n] σ
-        | V_Inter : forall σ τ, ↑α[n] σ -> ↑α[n] τ -> ↑α[n] σ ∩ τ
-      where "↑α[ n ] σ" := (VariableSuperset n σ).
+      Inductive VariableUpperset (n : nat): IntersectionType -> Prop :=
+        | VU_Var : ↑α[n] (Var n)
+        | VU_Omega : forall σ, σ ~ ω -> ↑α[n] σ
+        | VU_Inter : forall σ τ, ↑α[n] σ -> ↑α[n] τ -> ↑α[n] σ ∩ τ
+      where "↑α[ n ] σ" := (VariableUpperset n σ).
 
-      Fact VariableSuperset_ge : 
+      Fact VariableUpperset_geq : 
         forall n σ, ↑α[n] σ -> (Var n) ≤ σ.
       Proof.
         induction σ; intro.
@@ -331,14 +337,14 @@ Module Types.
         - exact OmegaTop.
       Qed.
 
-      Fact ge_VariableSuperset:
+      Fact geq_VariableUpperset:
         forall σ τ, σ ≤ τ -> forall n, ↑α[n] σ -> ↑α[n] τ.
       Proof.
         intros σ τ σLEτ.
         induction σLEτ.
         - intros n H.
           inversion H.
-          + apply (V_Omega _ _).
+          + apply (VU_Omega _ _).
             split.
             * exact OmegaTop.
             * transitivity (σ ∩ τ).
@@ -347,7 +353,7 @@ Module Types.
           + exact H2.
         - intros n H.
           inversion H.
-          + apply (V_Omega _ _).
+          + apply (VU_Omega _ _).
             split.
             * exact OmegaTop.
             * transitivity (σ ∩ τ).
@@ -355,10 +361,10 @@ Module Types.
               { exact InterMeetRight. }
           + exact H3.
         - intros n H.
-          exact (V_Inter _ _ _ H H).
+          exact (VU_Inter _ _ _ H H).
         - intros n H.
           inversion H.
-          + apply (V_Omega _ _).
+          + apply (VU_Omega _ _).
             split.
             * exact OmegaTop.
             * transitivity ((σ → ρ) ∩ (σ → τ)).
@@ -366,7 +372,7 @@ Module Types.
               { exact InterDistrib. }
           + inversion H2.
             inversion H3.
-            apply (V_Omega _ _).
+            apply (VU_Omega _ _).
             split.
             * exact OmegaTop.
             * transitivity (ω ∩ ω).
@@ -376,25 +382,25 @@ Module Types.
                 - exact InterDistrib. }
         - intros n H.
           inversion H.
-          + apply (V_Omega _ _).
+          + apply (VU_Omega _ _).
             split.
             * exact OmegaTop.
             * transitivity (σ ∩ τ).
               { exact (EqualTypesAreSubtypes_right _ _ H0). }
               { exact (SubtyDistrib σLEτ1 σLEτ2). }
-          + exact (V_Inter _ _ _ (IHσLEτ1 n H2) (IHσLEτ2 n H3)).
+          + exact (VU_Inter _ _ _ (IHσLEτ1 n H2) (IHσLEτ2 n H3)).
         - intros n H.
           inversion H.
-          apply (V_Omega _ _).
+          apply (VU_Omega _ _).
           split.
           + exact OmegaTop.
           + transitivity (σ' → τ).
             * exact (EqualTypesAreSubtypes_right _ _ H0).
             * exact (CoContra σLEτ1 σLEτ2).
         - intros n H.
-          exact (V_Omega _ _ Omega_eq).
+          exact (VU_Omega _ _ Omega_eq).
         - intros n H.
-          apply (V_Omega _ _).
+          apply (VU_Omega _ _).
           symmetry.
           exact (Arrow_Tgt_Omega_eq (Omega_eq)).
         - intros n H.
@@ -402,16 +408,390 @@ Module Types.
         - intros n H.
           exact (IHσLEτ2 n (IHσLEτ1 n H)).
       Qed.
+     
+      Reserved Notation "↓α[ n ] σ" (at level 89).
+      Inductive VariableLowerset (n : nat): IntersectionType -> Prop :=
+        | VL_Var : ↓α[n] (Var n)
+        | VL_InterLeft : forall σ τ, ↓α[n] σ -> ↓α[n] σ ∩ τ
+        | VL_InterRight : forall σ τ, ↓α[n] τ -> ↓α[n] σ ∩ τ
+      where "↓α[ n ] σ" := (VariableLowerset n σ).
+
+      Fact VariableLowerset_leq:
+        forall n σ, ↓α[n] σ -> σ ≤ (Var n).
+      Proof.
+        intros n σ σLEn.
+        induction σLEn.
+        - reflexivity.
+        - transitivity σ.
+          + exact InterMeetLeft.
+          + exact IHσLEn.
+        - transitivity τ.
+          + exact InterMeetRight.
+          + exact IHσLEn.
+      Qed.
       
+      Fact leq_VariableLowerset:
+        forall σ τ, σ ≤ τ -> forall n, ↓α[n] τ -> ↓α[n] σ.
+      Proof.
+        intros σ τ σLEτ.
+        induction σLEτ;
+          try solve [ intros n H; inversion H ].
+        - exact (fun n => VL_InterLeft n _ _).
+        - exact (fun n => VL_InterRight n _ _).
+        - intros n H.
+          inversion H; exact H1.
+        - intros n H.
+          inversion H.
+          + exact (VL_InterLeft _ _ _ (IHσLEτ1 _ H1)).
+          + exact (VL_InterRight _ _ _ (IHσLEτ2 _ H1)).
+        - exact (fun n p => p).
+        - intros n H.
+          exact (IHσLEτ1 _ (IHσLEτ2 _ H)).
+      Qed.
+
       Reserved Notation "↑[ σ ] → [ τ ] ρ" (at level 89).
-      Inductive ArrowSuperset (σ τ : IntersectionType): IntersectionType -> Prop :=
-        | A_Arrow : forall σ' τ', σ' ≤ σ -> τ ≤ τ' -> ↑[σ] → [τ] σ' → τ'
-        | A_Inter : forall σ' τ' ρ1 ρ2,
-            ↑[σ] → [ρ1] σ' -> ↑[σ] → [ρ2] τ' -> ρ1 ∩ ρ2 ≤ τ -> ↑[σ] → [τ] σ' ∩ τ'
-      where "↑[ σ ] → [ τ ] ρ" := (ArrowSuperset σ τ ρ).
+      Inductive ArrowUpperset (σ τ : IntersectionType): IntersectionType -> Prop :=
+        | AU_Omega : forall ρ, Ω ρ -> ↑[σ] → [τ] ρ
+        | AU_Arrow : forall σ' τ', σ' ≤ σ -> τ ≤ τ' -> ↑[σ] → [τ] σ' → τ'
+        | AU_Inter : forall σ' τ' ρ1 ρ2,
+            ↑[σ] → [ρ1] σ' -> ↑[σ] → [ρ2] τ' -> τ ≤ ρ1 ∩ ρ2 -> ↑[σ] → [τ] σ' ∩ τ'
+      where "↑[ σ ] → [ τ ] ρ" := (ArrowUpperset σ τ ρ).
+      
+      Fact ArrowUpperset_geq:
+        forall σ τ ρ, ↑[σ] → [τ] ρ -> σ → τ ≤ ρ.
+      Proof.
+        intros σ τ ρ στLEρ.
+        induction στLEρ.
+        - transitivity ω.
+          + exact OmegaTop.
+          + exact (Omega_equiv _ H).
+        - exact (CoContra H H0).
+        - transitivity ((σ → τ) ∩ (σ → τ)).
+          + exact InterIdem.
+          + apply SubtyDistrib.
+            * transitivity (σ → ρ1).
+              { apply CoContra.
+                - reflexivity.
+                - transitivity (ρ1 ∩ ρ2).
+                  + exact H.
+                  + exact InterMeetLeft. }
+              { exact IHστLEρ1. }
+            * transitivity (σ → ρ2).  
+              { apply CoContra.
+                - reflexivity.
+                - transitivity (ρ1 ∩ ρ2).
+                  + exact H.
+                  + exact InterMeetRight. }
+              { exact IHστLEρ2. }
+      Qed.
 
+      Fact ArrowUpperset_weaken:
+        forall σ τ ρ, ↑[σ] → [τ] ρ -> forall τ', τ' ≤ τ -> ↑[σ] → [τ'] ρ.
+      Proof.
+        intros σ τ ρ στLEρ.
+        induction στLEρ; intros τ'' τ''LEτ.
+        - exact (AU_Omega _ _ _ H).
+        - apply (AU_Arrow _ _ _).
+          + exact H.
+          + transitivity τ.
+            * exact τ''LEτ.
+            * exact H0. 
+        - apply (AU_Inter _ _ _ _ τ τ).
+          + apply (IHστLEρ1 _).
+            transitivity (ρ1 ∩ ρ2).
+            * exact H.
+            * exact InterMeetLeft.
+          + apply (IHστLEρ2 _).
+            transitivity (ρ1 ∩ ρ2).
+            * exact H.
+            * exact InterMeetRight.
+          + transitivity τ.
+            * exact τ''LEτ.
+            * exact InterIdem. 
+      Qed.
 
+      Fact geq_ArrowUpperset:
+        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ τ, ↑[σ] → [τ] ρ1 -> ↑[σ] → [τ] ρ2.
+      Proof.
+        intros ρ1 ρ2 ρ1LEρ2.
+        induction ρ1LEρ2; intros σ0 τ0 H.
+        - inversion H.
+          + apply (AU_Omega).
+            exact (Omega_closed (σ ∩ τ) σ InterMeetLeft H0).
+          + apply (ArrowUpperset_weaken _ _ _ H2).
+            transitivity (ρ1 ∩ ρ2).
+            * exact H4.
+            * exact InterMeetLeft.
+        - inversion H.
+          + apply (AU_Omega).
+            exact (Omega_closed (σ ∩ τ) τ InterMeetRight H0).
+          + apply (ArrowUpperset_weaken _ _ _ H3).
+            transitivity (ρ1 ∩ ρ2).
+            * exact H4.
+            * exact InterMeetRight.
+        - apply (AU_Inter _ _ _ _ _ _ H H).
+          exact InterIdem.
+        - inversion H.
+          + apply AU_Omega.
+            exact (Omega_closed _ _ InterDistrib H0).
+          + inversion H2; inversion H3.
+            * apply AU_Omega.
+              exact (Omega_closed _ _ InterDistrib (OmInter _ _ H5 H7)).
+            * apply AU_Arrow.
+              { exact H9. }
+              { transitivity (τ0 ∩ τ0).
+                - exact InterIdem.
+                - apply SubtyDistrib.
+                  + transitivity ω.
+                    * exact OmegaTop.
+                    * exact ((proj1 (Beta_Omega _ _)) (Omega_equiv _ H5)).
+                  + transitivity ρ2.
+                    * transitivity (ρ1 ∩ ρ2).
+                      { exact H4. }
+                      { exact InterMeetRight. } 
+                    * exact H10. } 
+            * apply AU_Arrow.
+              { exact H7. }
+              { transitivity (τ0 ∩ τ0).
+                - exact InterIdem.
+                - apply SubtyDistrib.
+                  + transitivity ρ1.
+                    * transitivity (ρ1 ∩ ρ2).
+                      { exact H4. }
+                      { exact InterMeetLeft. } 
+                    * exact H8.
+                  + transitivity ω.
+                    * exact OmegaTop.
+                    * exact ((proj1 (Beta_Omega _ _)) (Omega_equiv _ H9)). }
+            * apply AU_Arrow.
+              { exact H7. }
+              { transitivity (ρ1 ∩ ρ2).
+                - exact H4. 
+                - apply SubtyDistrib.
+                  + exact H8.
+                  + exact H12. }
+        - inversion H.
+          + apply AU_Omega.
+            exact (Omega_closed _ _ (SubtyDistrib ρ1LEρ2_1 ρ1LEρ2_2) H0).
+          + apply (AU_Inter _ _ _ _ τ0 τ0).
+            * apply (ArrowUpperset_weaken _ ρ1 _).
+              { exact (IHρ1LEρ2_1 _ _ H2). }
+              { transitivity (ρ1 ∩ ρ2).
+                - exact H4.
+                - exact InterMeetLeft. }
+            * apply (ArrowUpperset_weaken _ ρ2 _).
+              { exact (IHρ1LEρ2_2 _ _ H3). }
+              { transitivity (ρ1 ∩ ρ2).
+                - exact H4.
+                - exact InterMeetRight. }
+            * exact InterIdem.
+        - inversion H.
+          + apply AU_Omega.
+            exact (Omega_closed _ _ (CoContra ρ1LEρ2_1 ρ1LEρ2_2) H0).
+          + apply (AU_Arrow).
+            * transitivity σ'.
+              { exact ρ1LEρ2_1. }
+              { exact H2. }
+            * transitivity τ.
+              { exact H3. }
+              { exact ρ1LEρ2_2. }
+        - exact (AU_Omega _ _ _ Om).
+        - exact (AU_Omega _ _ _ (OmArr _  _ Om)).
+        - exact H.
+        - exact (IHρ1LEρ2_2 _ _ (IHρ1LEρ2_1 _ _ H)).
+      Qed.
 
+      Reserved Notation "↓[ σ ] → [ τ ] ρ" (at level 89).
+      Inductive ArrowLowerset (σ τ : IntersectionType): IntersectionType -> Prop :=
+        | AL_Omega : forall ρ, Ω τ -> ↓[σ] → [τ] ρ
+        | AL_Arrow : forall σ' τ', σ ≤ σ' -> τ' ≤ τ -> ↓[σ] → [τ] σ' → τ'
+        | AL_InterLeft : forall σ' τ', ↓[σ] → [τ] σ' -> ↓[σ] → [τ] σ' ∩ τ'
+        | AL_InterRight : forall σ' τ', ↓[σ] → [τ] τ' -> ↓[σ] → [τ] σ' ∩ τ'
+        | AL_Inter : forall σ' τ' ρ1 ρ2,
+            ↓[σ] → [ρ1] σ' -> ↓[σ] → [ρ2] τ' -> ρ1 ∩ ρ2 ≤ τ -> ↓[σ] → [τ] σ' ∩ τ'
+      where "↓[ σ ] → [ τ ] ρ" := (ArrowLowerset σ τ ρ).
+
+      Hint Resolve AL_Omega AL_Arrow AL_InterLeft AL_InterRight. 
+
+      Fact ArrowLowerset_leq:
+        forall σ τ ρ, ↓[σ] → [τ] ρ -> ρ ≤ σ → τ.
+      Proof.
+        intros σ τ ρ ρLEστ.
+        induction ρLEστ.
+        - transitivity ω.
+          + exact OmegaTop.
+          + exact (Omega_equiv _ (OmArr _ _ H)).
+        - exact (CoContra H H0).
+        - transitivity σ'.
+          + exact InterMeetLeft.
+          + exact IHρLEστ.
+        - transitivity τ'.
+          + exact InterMeetRight.
+          + exact IHρLEστ.
+        - transitivity ((σ → ρ1) ∩ (σ → ρ2)).
+          + exact (SubtyDistrib IHρLEστ1 IHρLEστ2).
+          + transitivity (σ → ρ1 ∩ ρ2).
+            * exact InterDistrib.
+            * apply CoContra.
+              { reflexivity. } 
+              { exact H. }
+      Qed.
+
+      Fact ArrowLowerset_weaken:
+        forall σ τ ρ, ↓[σ] → [τ] ρ -> forall τ', τ ≤ τ' -> ↓[σ] → [τ'] ρ.
+      Proof.
+        intros σ τ ρ ρLEστ.
+        induction ρLEστ; intros τ'' τLEτ''.
+        - set (H' := Omega_closed _ _ τLEτ'' H).
+          auto.
+        - set (H0' := transitivity H0 τLEτ'').
+          auto.
+        - set (IHρLEστ' := IHρLEστ τ'' τLEτ''). 
+          auto.
+        - set (IHρLEστ' := IHρLEστ τ'' τLEτ''). 
+          auto.
+        - set (IHρLEστ1' := IHρLEστ1 ρ1 (reflexivity _)).
+          set (IHρLEστ2' := IHρLEστ2 ρ2 (reflexivity _)).
+          set (ρ1ρ2LEτ'' := transitivity H τLEτ'').
+          exact (AL_Inter _ _ _ _ _ _ IHρLEστ1' IHρLEστ2' ρ1ρ2LEτ'').
+      Qed.
+
+      Fact ArrowLowerset_both:
+        forall τ ρ1 ρ2 σ, ↓[σ] → [ρ1] τ -> ↓[σ] → [ρ2] τ -> ↓[σ] → [ρ1 ∩ ρ2] τ.
+      Proof.
+        intro τ.
+        induction τ;
+          intros ρ1 ρ2 σ H1 H2;
+          inversion H1;
+          try solve [
+            set (ρ1ω := Omega_equiv _ H);
+            assert (ρ2LEρ1ρ2 : ρ2 ≤ ρ1 ∩ ρ2);
+            solve [
+              apply (transitivity InterIdem);
+              apply SubtyDistrib;
+              solve [
+                transitivity ω; solve [ auto | exact ρ1ω ]
+                |  reflexivity ]
+            | exact (ArrowLowerset_weaken _ _ _ H2 _ ρ2LEρ1ρ2) ] ];
+          inversion H2 as [ * ωρ2 ρeq  |  |  |  |  ];
+          try solve [
+            set (ρ2ω := Omega_equiv _ ωρ2);
+            assert (ρ1LEρ1ρ2 : ρ1 ≤ ρ1 ∩ ρ2);
+            solve [
+              apply (transitivity InterIdem);
+              apply SubtyDistrib;
+              solve [
+                reflexivity
+                | transitivity ω; solve [ auto | exact ρ2ω ] ]
+            | exact (ArrowLowerset_weaken _ _ _ H1 _ ρ1LEρ1ρ2) ] ].          
+        - apply AL_Arrow.
+          + auto.
+          + apply (transitivity InterIdem).
+            apply SubtyDistrib.
+            * auto.
+            * auto. 
+        - apply AL_InterLeft.
+          apply IHτ1; auto.
+        - apply (AL_Inter _ _ _ _ ρ1 ρ2); auto;
+          reflexivity.
+        - apply (AL_Inter _ _ _ _ (ρ0 ∩ ρ1) ρ3).
+          + apply IHτ1; auto.
+          + auto.
+          + transitivity (ρ1 ∩ ρ0 ∩ ρ3).
+            * transitivity ((ρ1 ∩ ρ0) ∩ ρ3).
+              { apply SubtyDistrib.
+                - apply InterSym.
+                - reflexivity. }
+              { apply (transitivity InterIdem).
+                apply SubtyDistrib.
+                - apply (transitivity InterMeetLeft).
+                  auto.
+                - apply SubtyDistrib.
+                  + auto.
+                  + reflexivity. }
+            * apply SubtyDistrib.
+              { reflexivity. }
+              { auto. }
+       - apply (AL_Inter _ _ _ _ ρ2 ρ1); auto.
+         exact (InterSym).
+       - apply AL_InterRight.
+         apply IHτ2; auto.
+       - apply (AL_Inter _ _ _ _ ρ0 (ρ1 ∩ ρ3)).
+          + auto.
+          + apply IHτ2; auto.
+          + transitivity (ρ1 ∩ ρ0 ∩ ρ3).
+            * apply (transitivity InterIdem).
+              apply SubtyDistrib.
+              { apply (transitivity InterMeetRight).
+                auto. }
+              { apply SubtyDistrib.
+                reflexivity.
+                auto. }
+            * apply SubtyDistrib.
+              { reflexivity. }
+              { auto. }
+       - apply (AL_Inter _ _ _ _ (ρ0 ∩ ρ2) ρ3).
+          + apply IHτ1; auto.
+          + auto.
+          + transitivity ((ρ0 ∩ ρ3) ∩ ρ2).
+            * apply (transitivity InterIdem).
+              apply SubtyDistrib.
+              { apply (SubtyDistrib).
+                - auto.
+                - reflexivity. }
+              { apply (transitivity InterMeetLeft).
+                auto. }
+            * apply SubtyDistrib.
+              { auto. }
+              { reflexivity. }
+       - apply (AL_Inter _ _ _ _ ρ0 (ρ2 ∩ ρ3)).
+          + auto.
+          + apply IHτ2; auto.
+          + transitivity ((ρ0 ∩ ρ3) ∩ ρ2).
+            * apply (transitivity InterIdem).
+              apply SubtyDistrib.
+              { apply (SubtyDistrib).
+                - reflexivity.
+                - auto. }
+              { apply (transitivity InterMeetRight).
+                auto. }
+            * apply SubtyDistrib.
+              { auto. }
+              { reflexivity. }
+       - apply (AL_Inter _ _ _ _ (ρ0 ∩ ρ4) (ρ3 ∩ ρ5)).
+          + apply IHτ1; auto.
+          + apply IHτ2; auto.
+          + transitivity ((ρ0 ∩ ρ3) ∩ ρ4 ∩ ρ5).
+            * apply (transitivity InterIdem).
+              apply SubtyDistrib;
+                apply (SubtyDistrib); auto.
+            * apply SubtyDistrib; auto.
+      Qed.
+
+      Fact leq_ArrowLowerset:
+        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ τ, ↓[σ] → [τ] ρ2 -> ↓[σ] → [τ] ρ1.
+      Proof.
+        intros ρ1 ρ2 ρ1LEρ2.
+        induction ρ1LEρ2; 
+          try solve [ auto ];
+          intros σ'' τ'' H;
+          inversion H;
+          auto.
+        - exact (ArrowLowerset_weaken _ _ _ (ArrowLowerset_both _ _ _ _ H2 H3) _ H4).
+        - apply (AL_Inter _ _ _ _ ρ τ).
+          + exact (AL_Arrow _ _ _ _ H2 (reflexivity ρ)).
+          + exact (AL_Arrow _ _ _ _ H2 (reflexivity τ)). 
+          + exact H3.
+        - apply (AL_Inter _ _ _ _ ρ1 ρ2).
+          + exact (IHρ1LEρ2_1 _ _ H2).
+          + exact (IHρ1LEρ2_2 _ _ H3).
+          + exact H4.
+        - apply AL_Arrow.
+          + exact (transitivity H2 ρ1LEρ2_1).
+          + exact (transitivity ρ1LEρ2_2 H3).
+        - set (ωτ := Omega_closed _ _ H3 Om).
+          auto.
+      Qed.
 
       Definition ArrowSelection (ρ σ τ: IntersectionType): Prop :=
         let fix sel (ρ : IntersectionType) 
