@@ -1009,6 +1009,48 @@ Module Types.
       Qed.
 
       Lemma Ideal_prime:
+        forall ρ1 ρ2 σ,
+          ↓[σ] ρ1 ∩ ρ2 ->
+          (((↓[σ] ρ1) \/ (ρ2 ≤ ρ1)) \/
+           ((↓[σ] ρ2) \/ (ρ1 ≤ ρ2)) <->
+           (↓[σ] ρ1) \/ (↓[σ] ρ2)).
+      Proof.
+        intros ρ1 ρ2 σ.
+        induction σ; 
+          intro ρ1ρ2LEσ;
+          split; 
+          try solve [ intro primality; destruct primality; auto ].
+        - intro.
+          apply (VariableIdeal_prime _ _);
+          trivial.
+        - intro.
+          apply (ArrowIdeal_prime _ _ _ _);
+          trivial.
+        - intro primality.
+          destruct primality as [ [ ρ1LEσ1σ2 | ρ2LEρ1 ] | [ ρ2LEσ1σ2 | ρ1LEρ2 ] ]; 
+            try solve [ auto ];
+            destruct ρ1ρ2LEσ as [ ρ1ρ2LEσ1 ρ1ρ2LEσ2 ].
+          + assert (ρ2LEρ1ρ2 : ρ2 ≤ ρ1 ∩ ρ2).
+            * apply (transitivity InterIdem).
+              apply SubtyDistrib. 
+              { trivial. }
+              { reflexivity. }
+            * right.
+              apply (Ideal_lowerset _ _ ρ2LEρ1ρ2).
+              simpl.
+              auto.
+          + assert (ρ1LEρ1ρ2 : ρ1 ≤ ρ1 ∩ ρ2).
+            * apply (transitivity InterIdem).
+              apply SubtyDistrib. 
+              { reflexivity. }
+              { trivial. }
+            * left.
+              apply (Ideal_lowerset _ _ ρ1LEρ1ρ2).
+              simpl.
+              auto.
+      Qed.
+
+
 
 
         
