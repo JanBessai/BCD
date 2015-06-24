@@ -508,7 +508,6 @@ Module Types.
         inversion στLEn as [ | * * σLEn | * * τLEn ]; auto.
       Qed.
 
-
       Reserved Notation "↑[ σ ] → [ τ ] ρ" (at level 89).
       Inductive ArrowFilter (σ τ : IntersectionType): IntersectionType -> Prop :=
         | AF_Omega : forall ρ, Ω ρ -> ↑[σ] → [τ] ρ
@@ -924,6 +923,136 @@ Module Types.
           + right; auto.
       Qed.
             
+      Fixpoint Filter σ: IntersectionType -> Prop :=
+        match σ with
+          | ω => Ω
+          | Var n => VariableFilter n 
+          | σ → τ => ArrowFilter σ τ
+          | σ ∩ τ => fun ρ => Filter σ ρ /\ Filter τ ρ
+        end.
+      Notation "↑[ σ ] τ" := (Filter σ τ) (at level 89).
+
+      Fixpoint Ideal σ: IntersectionType -> Prop :=
+        match σ with
+          | ω => fun _ => True
+          | Var n => VariableIdeal n
+          | σ → τ => ArrowIdeal σ τ
+          | σ ∩ τ => fun ρ => Ideal σ ρ /\ Ideal τ ρ
+        end.
+      Notation "↓[ σ ] τ" := (Ideal σ τ) (at level 89).
+
+      Lemma Filter_principal:
+        forall σ τ, ↑[σ] τ -> σ ≤ τ.
+      Proof.
+        induction σ.
+        - exact (VariableFilter_principal _).
+        - exact (ArrowFilter_principal _ _).
+        - intros τ τGEσ1σ2.
+          destruct τGEσ1σ2 as [τGEσ1 τGEσ2].
+          apply (transitivity InterMeetLeft).
+          auto.
+        - exact (Ω_principal).
+      Qed.
+
+      Lemma Ideal_principal:
+        forall σ τ, ↓[σ] τ -> τ ≤ σ.
+      Proof.
+        induction σ.
+        - exact (VariableIdeal_principal _).
+        - exact (ArrowIdeal_principal _ _).
+        - intros τ τLEσ1σ2.
+          destruct τLEσ1σ2 as [ τLEσ1 τLEσ2 ].
+          apply (transitivity InterIdem).
+          apply SubtyDistrib; auto.
+        - intros; exact OmegaTop.
+      Qed.
+
+      Lemma Filter_upperset:
+        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ, ↑[σ] ρ1 -> ↑[σ] ρ2.
+      Proof.
+        intros ρ1 ρ2 ρ1LEρ2 σ.
+        induction σ.
+        - exact (VariableFilter_upperset _ _ ρ1LEρ2 _).
+        - exact (ArrowFilter_upperset _ _ ρ1LEρ2 _ _).
+        - intro ρ1LEσ1σ2.
+          destruct ρ1LEσ1σ2 as [ ρ1LEσ1 ρ1LEσ2 ].
+          simpl. auto.
+        - exact (Ω_upperset _ _ ρ1LEρ2).
+      Qed.
+
+      Lemma Ideal_lowerset:
+        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ, ↓[σ] ρ2 -> ↓[σ] ρ1.
+      Proof.
+        intros ρ1 ρ2 ρ1LEρ2 σ.
+        induction σ.
+        - exact (VariableIdeal_lowerset _ _ ρ1LEρ2 _).
+        - exact (ArrowIdeal_lowerset _ _ ρ1LEρ2 _ _).
+        - intro ρ2LEσ1σ2.
+          destruct ρ2LEσ1σ2 as [ ρ2LEσ1 ρ2LEσ2 ].
+          split; auto.
+        - trivial.
+      Qed.
+
+      Lemma Ideal_principalElement:
+        forall σ τ, τ ≤ σ -> ↓[σ] τ.
+      Proof.
+        intro σ.
+        induction σ.
+        - intro.
+          exact (VariableIdeal_principalElement _ _).
+        - intro.
+          exact (ArrowIdeal_principalElement _ _ _).
+        - intros τ τLEσ1σ2.
+          split; [ apply IHσ1 | apply IHσ2 ];
+            transitivity (σ1 ∩ σ2); auto.
+        - simpl. auto.
+      Qed.
+
+      Lemma Ideal_prime:
+
+
+        
+      (*Lemma Ideal2Filter:
+        forall σ τ, ↓[σ] τ -> ↑[τ] σ.
+      Proof.
+        intros σ τ τLEσ.
+        set (τLEσ' := Ideal_principal _ _ τLEσ).*)
+
+      Lemma Filter_principalElement:
+        forall σ τ, σ ≤ τ -> ↑[σ] τ.
+      Proof.
+        intro σ.
+        induction σ; intro τ.
+        - exact (VariableFilter_principalElement _ _).
+        - exact (ArrowFilter_principalElement _ _ _).
+        - intro σ1σ2LEτ.
+          split.
+
+        
+          induction τ; intro σ1σ2LEτ.
+          + set (σ1σ2LEn := VariableIdeal_lowerset _ _ σ1σ2LEτ _ (VI_Var _)).
+            inversion σ1σ2LEn as [ | * * σ1LEn | * * σ2LEn ].
+            * left.
+              set (σ1LEτ := VariableIdeal_principal _ _ σ1LEn).
+              auto.
+            * right.
+              set (σ2LEτ := VariableIdeal_principal _ _ σ2LEn).
+              auto.
+          + set (σ1σ2LEστ := ArrowIdeal_lowerset _ _ σ1σ2LEτ _ _
+                  (AI_Arrow _ _ _ _ (reflexivity τ1) (reflexivity τ2))).
+            inversion σ1σ2LEστ as [ * ωτ2 | | * * τ1τ2LEσ1 | | ].
+            * left.
+              set (τ1τ2ω := Arrow_Tgt_Omega_eq (σ := τ1) (Ω_principal _ ωτ2)).
+              apply IHσ1.
+              apply (transitivity OmegaTop).
+              exact τ1τ2ω.
+            * left.
+              
+
+          induction τ
+          induction σ1σ2LEτ.
+          + left.
+        - exact (Ω_principalElement _).
 
 
       Print ArrowLowerset_both.
