@@ -326,124 +326,7 @@ Module Types.
           exact (Ω_principal _ ωτ).
         - exact Arrow_Tgt_Omega_eq.
       Qed.
-
-      Reserved Notation "↑α[ n ] σ " (at level 89).
-      Inductive VariableFilter (n : nat): IntersectionType -> Prop :=
-        | VF_Var : ↑α[n] (Var n)
-        | VF_Omega : forall σ, σ ~ ω -> ↑α[n] σ
-        | VF_Inter : forall σ τ, ↑α[n] σ -> ↑α[n] τ -> ↑α[n] σ ∩ τ
-      where "↑α[ n ] σ" := (VariableFilter n σ).
-
-      Fact VariableFilter_principal: 
-        forall n σ, ↑α[n] σ -> (Var n) ≤ σ.
-      Proof.
-        induction σ; intro.
-        - inversion H.
-          + reflexivity.
-          + contradict (Var_never_omega n0 (EqualTypesAreSubtypes_right _ _ H0)).
-        - inversion H.
-          transitivity ω .
-          + exact OmegaTop.
-          + exact (EqualTypesAreSubtypes_right _ _ H0).
-        - inversion H.
-          + transitivity ω.
-            * exact OmegaTop.
-            * exact (EqualTypesAreSubtypes_right _ _ H0).  
-          + transitivity (Var n ∩ Var n).
-            * exact (InterIdem).
-            * exact (SubtyDistrib (IHσ1 H2) (IHσ2 H3)).
-        - exact OmegaTop.
-      Qed.
-
-      Fact VariableFilter_upperset:
-        forall σ τ, σ ≤ τ -> forall n, ↑α[n] σ -> ↑α[n] τ.
-      Proof.
-        intros σ τ σLEτ.
-        induction σLEτ.
-        - intros n H.
-          inversion H.
-          + apply (VF_Omega _ _).
-            split.
-            * exact OmegaTop.
-            * transitivity (σ ∩ τ).
-              { exact (EqualTypesAreSubtypes_right _ _ H0). }
-              { exact InterMeetLeft. }
-          + exact H2.
-        - intros n H.
-          inversion H.
-          + apply (VF_Omega _ _).
-            split.
-            * exact OmegaTop.
-            * transitivity (σ ∩ τ).
-              { exact (EqualTypesAreSubtypes_right _ _ H0). }
-              { exact InterMeetRight. }
-          + exact H3.
-        - intros n H.
-          exact (VF_Inter _ _ _ H H).
-        - intros n H.
-          inversion H.
-          + apply (VF_Omega _ _).
-            split.
-            * exact OmegaTop.
-            * transitivity ((σ → ρ) ∩ (σ → τ)).
-              { exact (EqualTypesAreSubtypes_right _ _ H0). } 
-              { exact InterDistrib. }
-          + inversion H2.
-            inversion H3.
-            apply (VF_Omega _ _).
-            split.
-            * exact OmegaTop.
-            * transitivity (ω ∩ ω).
-              { exact InterIdem. }
-              { transitivity ((σ → ρ) ∩ (σ → τ)).
-                - exact (SubtyDistrib (EqualTypesAreSubtypes_right _ _ H4) (EqualTypesAreSubtypes_right _ _ H6)).
-                - exact InterDistrib. }
-        - intros n H.
-          inversion H.
-          + apply (VF_Omega _ _).
-            split.
-            * exact OmegaTop.
-            * transitivity (σ ∩ τ).
-              { exact (EqualTypesAreSubtypes_right _ _ H0). }
-              { exact (SubtyDistrib σLEτ1 σLEτ2). }
-          + exact (VF_Inter _ _ _ (IHσLEτ1 n H2) (IHσLEτ2 n H3)).
-        - intros n H.
-          inversion H.
-          apply (VF_Omega _ _).
-          split.
-          + exact OmegaTop.
-          + transitivity (σ' → τ).
-            * exact (EqualTypesAreSubtypes_right _ _ H0).
-            * exact (CoContra σLEτ1 σLEτ2).
-        - intros n H.
-          exact (VF_Omega _ _ Omega_eq).
-        - intros n H.
-          apply (VF_Omega _ _).
-          symmetry.
-          exact (Arrow_Tgt_Omega_eq (Omega_eq)).
-        - intros n H.
-          exact H.
-        - intros n H.
-          exact (IHσLEτ2 n (IHσLEτ1 n H)).
-      Qed.
-      
-      Corollary VariableFilter_principalElement:
-        forall σ n, (Var n) ≤ σ -> ↑α[n] σ.
-      Proof.
-        intros σ n nLEσ.
-        exact (VariableFilter_upperset _ _ nLEσ _ (VF_Var n)).
-      Qed.
-      
-      Fact VariableFilter_directed:
-        forall n σ τ, ↑α[n] σ -> ↑α[n] τ -> (↑α[n] (Var n)) /\ ((Var n) ≤ σ) /\ ((Var n) ≤ τ).
-      Proof.
-        intros n σ τ nLEσ nLEτ.
-        split; [|split].
-        - exact (VF_Var n).
-        - exact (VariableFilter_principal _ _ nLEσ).
-        - exact (VariableFilter_principal _ _ nLEτ).
-      Qed.
-
+     
       Reserved Notation "↓α[ n ] σ" (at level 89).
       Inductive VariableIdeal (n : nat): IntersectionType -> Prop :=
         | VI_Var : ↓α[n] (Var n)
@@ -507,178 +390,7 @@ Module Types.
         intros σ τ n στLEn.
         inversion στLEn as [ | * * σLEn | * * τLEn ]; auto.
       Qed.
-
-      Reserved Notation "↑[ σ ] → [ τ ] ρ" (at level 89).
-      Inductive ArrowFilter (σ τ : IntersectionType): IntersectionType -> Prop :=
-        | AF_Omega : forall ρ, Ω ρ -> ↑[σ] → [τ] ρ
-        | AF_Arrow : forall σ' τ', σ' ≤ σ -> τ ≤ τ' -> ↑[σ] → [τ] σ' → τ'
-        | AF_Inter : forall σ' τ' ρ1 ρ2,
-            ↑[σ] → [ρ1] σ' -> ↑[σ] → [ρ2] τ' -> τ ≤ ρ1 ∩ ρ2 -> ↑[σ] → [τ] σ' ∩ τ'
-      where "↑[ σ ] → [ τ ] ρ" := (ArrowFilter σ τ ρ).
       
-      Fact ArrowFilter_principal:
-        forall σ τ ρ, ↑[σ] → [τ] ρ -> σ → τ ≤ ρ.
-      Proof.
-        intros σ τ ρ στLEρ.
-        induction στLEρ.
-        - transitivity ω.
-          + exact OmegaTop.
-          + exact (Ω_principal _ H).
-        - exact (CoContra H H0).
-        - transitivity ((σ → τ) ∩ (σ → τ)).
-          + exact InterIdem.
-          + apply SubtyDistrib.
-            * transitivity (σ → ρ1).
-              { apply CoContra.
-                - reflexivity.
-                - transitivity (ρ1 ∩ ρ2).
-                  + exact H.
-                  + exact InterMeetLeft. }
-              { exact IHστLEρ1. }
-            * transitivity (σ → ρ2).  
-              { apply CoContra.
-                - reflexivity.
-                - transitivity (ρ1 ∩ ρ2).
-                  + exact H.
-                  + exact InterMeetRight. }
-              { exact IHστLEρ2. }
-      Qed.
-
-      Fact ArrowFilter_weaken:
-        forall σ τ ρ, ↑[σ] → [τ] ρ -> forall τ', τ' ≤ τ -> ↑[σ] → [τ'] ρ.
-      Proof.
-        intros σ τ ρ στLEρ.
-        induction στLEρ; intros τ'' τ''LEτ.
-        - exact (AF_Omega _ _ _ H).
-        - apply (AF_Arrow _ _ _).
-          + exact H.
-          + transitivity τ.
-            * exact τ''LEτ.
-            * exact H0. 
-        - apply (AF_Inter _ _ _ _ τ τ).
-          + apply (IHστLEρ1 _).
-            transitivity (ρ1 ∩ ρ2).
-            * exact H.
-            * exact InterMeetLeft.
-          + apply (IHστLEρ2 _).
-            transitivity (ρ1 ∩ ρ2).
-            * exact H.
-            * exact InterMeetRight.
-          + transitivity τ.
-            * exact τ''LEτ.
-            * exact InterIdem. 
-      Qed.
-
-      Fact ArrowFilter_upperset:
-        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ τ, ↑[σ] → [τ] ρ1 -> ↑[σ] → [τ] ρ2.
-      Proof.
-        intros ρ1 ρ2 ρ1LEρ2.
-        induction ρ1LEρ2; intros σ0 τ0 H.
-        - inversion H.
-          + apply (AF_Omega).
-            exact (Ω_upperset (σ ∩ τ) σ InterMeetLeft H0).
-          + apply (ArrowFilter_weaken _ _ _ H2).
-            transitivity (ρ1 ∩ ρ2).
-            * exact H4.
-            * exact InterMeetLeft.
-        - inversion H.
-          + apply (AF_Omega).
-            exact (Ω_upperset (σ ∩ τ) τ InterMeetRight H0).
-          + apply (ArrowFilter_weaken _ _ _ H3).
-            transitivity (ρ1 ∩ ρ2).
-            * exact H4.
-            * exact InterMeetRight.
-        - apply (AF_Inter _ _ _ _ _ _ H H).
-          exact InterIdem.
-        - inversion H.
-          + apply AF_Omega.
-            exact (Ω_upperset _ _ InterDistrib H0).
-          + inversion H2; inversion H3.
-            * apply AF_Omega.
-              exact (Ω_upperset _ _ InterDistrib (OF_Inter _ _ H5 H7)).
-            * apply AF_Arrow.
-              { exact H9. }
-              { transitivity (τ0 ∩ τ0).
-                - exact InterIdem.
-                - apply SubtyDistrib.
-                  + transitivity ω.
-                    * exact OmegaTop.
-                    * exact ((proj1 (Beta_Omega _ _)) (Ω_principal _ H5)).
-                  + transitivity ρ2.
-                    * transitivity (ρ1 ∩ ρ2).
-                      { exact H4. }
-                      { exact InterMeetRight. } 
-                    * exact H10. } 
-            * apply AF_Arrow.
-              { exact H7. }
-              { transitivity (τ0 ∩ τ0).
-                - exact InterIdem.
-                - apply SubtyDistrib.
-                  + transitivity ρ1.
-                    * transitivity (ρ1 ∩ ρ2).
-                      { exact H4. }
-                      { exact InterMeetLeft. } 
-                    * exact H8.
-                  + transitivity ω.
-                    * exact OmegaTop.
-                    * exact ((proj1 (Beta_Omega _ _)) (Ω_principal _ H9)). }
-            * apply AF_Arrow.
-              { exact H7. }
-              { transitivity (ρ1 ∩ ρ2).
-                - exact H4. 
-                - apply SubtyDistrib.
-                  + exact H8.
-                  + exact H12. }
-        - inversion H.
-          + apply AF_Omega.
-            exact (Ω_upperset _ _ (SubtyDistrib ρ1LEρ2_1 ρ1LEρ2_2) H0).
-          + apply (AF_Inter _ _ _ _ τ0 τ0).
-            * apply (ArrowFilter_weaken _ ρ1 _).
-              { exact (IHρ1LEρ2_1 _ _ H2). }
-              { transitivity (ρ1 ∩ ρ2).
-                - exact H4.
-                - exact InterMeetLeft. }
-            * apply (ArrowFilter_weaken _ ρ2 _).
-              { exact (IHρ1LEρ2_2 _ _ H3). }
-              { transitivity (ρ1 ∩ ρ2).
-                - exact H4.
-                - exact InterMeetRight. }
-            * exact InterIdem.
-        - inversion H.
-          + apply AF_Omega.
-            exact (Ω_upperset _ _ (CoContra ρ1LEρ2_1 ρ1LEρ2_2) H0).
-          + apply (AF_Arrow).
-            * transitivity σ'.
-              { exact ρ1LEρ2_1. }
-              { exact H2. }
-            * transitivity τ.
-              { exact H3. }
-              { exact ρ1LEρ2_2. }
-        - exact (AF_Omega _ _ _ OF_Omega).
-        - exact (AF_Omega _ _ _ (OF_Arrow _  _ OF_Omega)).
-        - exact H.
-        - exact (IHρ1LEρ2_2 _ _ (IHρ1LEρ2_1 _ _ H)).
-      Qed.
-
-      Corollary ArrowFilter_principalElement:
-        forall ρ σ τ, σ → τ ≤ ρ -> ↑[σ] → [τ] ρ.
-      Proof.
-        intros ρ σ τ στLEρ.
-        exact (ArrowFilter_upperset _ _ στLEρ _ _
-                (AF_Arrow _ _ _ _ (reflexivity σ) (reflexivity τ))).
-      Qed.
-      
-      Fact ArrowFilter_directed:
-        forall ρ1 ρ2 σ τ, ↑[σ] → [τ] ρ1 -> ↑[σ] → [τ] ρ2 ->
-        (↑[σ] → [τ] σ → τ) /\ (σ → τ ≤ ρ1) /\ (σ → τ ≤ ρ2).
-      Proof.
-        intros ρ1 ρ2 σ τ στLEρ1 στLEρ2.
-        split; [|split].
-        - exact (AF_Arrow _ _ _ _ (reflexivity σ) (reflexivity τ)).
-        - exact (ArrowFilter_principal _ _ _ στLEρ1).
-        - exact (ArrowFilter_principal _ _ _ στLEρ2).
-      Qed.
-
       Reserved Notation "↓[ σ ] → [ τ ] ρ" (at level 89).
       Inductive ArrowIdeal (σ τ : IntersectionType): IntersectionType -> Prop :=
         | AI_Omega : forall ρ, ↑ω τ -> ↓[σ] → [τ] ρ
@@ -922,7 +634,172 @@ Module Types.
           + left; auto.
           + right; auto.
       Qed.
-            
+      
+      Reserved Notation "↓[ σ ] τ" (at level 89).
+      Fixpoint Ideal σ: IntersectionType -> Prop :=
+        match σ with
+          | ω => fun _ => Ω ω
+          | Var n => fun τ => ↓α[n] τ
+          | σ' → τ' => fun τ => ↓[σ'] → [τ'] τ
+          | σ' ∩ τ' => fun τ => (↓[σ'] τ) /\ (↓[τ'] τ)
+        end
+      where "↓[ σ ] τ" := (Ideal σ τ).
+
+      Definition Filter σ: IntersectionType -> Prop :=
+        match σ with
+          | ω => Ω
+          | _ => fun τ => ↓[τ] σ
+        end.
+      Notation "↑[ σ ] τ" := (Filter σ τ) (at level 89).
+      
+      Notation "↑α[ n ] σ " := (↑[Var n] σ) (at level 89).
+      Notation "↑[ σ ] → [ τ ] ρ" := (↑[σ → τ] ρ) (at level 89).
+      
+      Lemma Filter_Ideal:
+        forall σ τ, ↑[σ] τ -> ↓[τ] σ.
+      Proof.
+        intro σ.
+        induction σ;
+          intro τ;
+          induction τ;
+          try solve [ trivial ];
+          intro σLEτ;
+          inversion σLEτ.
+        - apply AI_Omega.
+          assumption.
+        - split.
+          + apply IHτ1.
+            assumption.
+          + apply IHτ2.
+            assumption.
+      Qed.
+
+      Lemma Ideal_Filter:
+        forall σ τ, ↓[σ] τ -> ↑[τ] σ.
+      Proof.
+        intro σ.
+        induction σ;
+          intro τ;
+          induction τ;
+          try solve [ trivial ];
+          intro τLEσ;
+          inversion τLEσ.
+        - apply OF_Arrow.
+          assumption.
+        - apply OF_Inter.
+          + apply (IHσ1 ω).
+            assumption.
+          + apply (IHσ2 ω).
+            assumption.
+      Qed.
+
+      Lemma Ideal_principal:
+        forall σ τ, ↓[σ] τ -> τ ≤ σ.
+      Proof.
+        induction σ.
+        - exact (VariableIdeal_principal _).
+        - exact (ArrowIdeal_principal _ _).
+        - intros τ τLEσ1σ2.
+          destruct τLEσ1σ2 as [ τLEσ1 τLEσ2 ].
+          apply (transitivity InterIdem).
+          apply SubtyDistrib; auto.
+        - intros; exact OmegaTop.
+      Qed.      
+
+      Lemma Filter_principal:
+        forall σ τ, ↑[σ] τ -> σ ≤ τ.
+      Proof.
+        intros.
+        apply Ideal_principal.
+        apply Filter_Ideal.
+        assumption.
+      Qed.
+
+      Lemma Ideal_lowerset:
+        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ, ↓[σ] ρ2 -> ↓[σ] ρ1.
+      Proof.
+        intros ρ1 ρ2 ρ1LEρ2 σ.
+        induction σ.
+        - exact (VariableIdeal_lowerset _ _ ρ1LEρ2 _).
+        - exact (ArrowIdeal_lowerset _ _ ρ1LEρ2 _ _).
+        - intro ρ2LEσ1σ2.
+          destruct ρ2LEσ1σ2 as [ ρ2LEσ1 ρ2LEσ2 ].
+          split; auto.
+        - trivial.
+      Qed.
+
+      Lemma Ideal_refl:
+        forall σ, ↓[σ] σ.
+      Proof.
+        induction σ.
+        - exact (VI_Var _).
+        - exact (AI_Arrow _ _ _ _ (reflexivity _) (reflexivity _)).
+        - split.
+          + apply (Ideal_lowerset _ σ1); auto.
+          + apply (Ideal_lowerset _ σ2); auto.
+        - exact (OF_Omega).
+      Qed.
+      
+      Instance Ideal_Reflexive : Reflexive Ideal := Ideal_refl.
+
+      Lemma Filter_upperset:
+        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ, ↑[σ] ρ1 -> ↑[σ] ρ2.
+      Proof.
+        intros.
+        apply Ideal_Filter.
+        apply (Ideal_lowerset _ ρ1).
+        - apply Filter_principal.
+          assumption.
+        - apply (Ideal_lowerset _ ρ2).
+          + assumption.
+          + reflexivity.
+      Qed.
+ 
+      Lemma Filter_refl:
+        forall σ, ↑[σ] σ.
+      Proof.
+        intros.
+        apply Ideal_Filter.
+        reflexivity.
+      Qed.
+
+      Instance Filter_Reflexive : Reflexive Filter := Filter_refl.
+
+   
+      Lemma Ideal_principalElement:
+        forall σ τ, τ ≤ σ -> ↓[σ] τ.
+      Proof.
+        intro σ.
+        induction σ.
+        - intro.
+          exact (VariableIdeal_principalElement _ _).
+        - intro.
+          exact (ArrowIdeal_principalElement _ _ _).
+        - intros τ τLEσ1σ2.
+          split; [ apply IHσ1 | apply IHσ2 ];
+            transitivity (σ1 ∩ σ2); auto.
+        - intros.
+          exact OF_Omega.
+      Qed.
+
+      Lemma Filter_principalElement:
+        forall σ τ, σ ≤ τ -> ↑[σ] τ.
+      Proof.
+        intros.
+        apply Ideal_Filter.
+        apply Ideal_principalElement.
+        assumption.
+      Qed.
+
+
+
+      Lemma IdealFilter_dual:
+        forall σ τ, ↓[σ] τ -> ↑[τ] σ.
+
+      
+         
+
+      (*
       Fixpoint Filter σ: IntersectionType -> Prop :=
         match σ with
           | ω => Ω
