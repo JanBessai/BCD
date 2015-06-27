@@ -190,7 +190,7 @@ Module Types.
     Instance Subtypes_Reflexive : Reflexive Subtypes :=
       fun σ => ST _ _ ((clos_rt_is_preorder _ _).(preord_refl _ _) σ).
     Instance Subtypes_Transitive : Transitive Subtypes := 
-      fun σ τ ρ p1 p2 => ST _ _ ((clos_rt_is_preorder _ _).(preord_trans _ _) σ τ ρ (unST _ _ p1) (unST _ _ p2)).
+      fun σ τ ρ p1 p2 => ST _ _ ((clos_rt_is_preorder _ _).(preord_trans _ _) σ τ ρ (unST _ _ p1) (unST _ _ p2)).  
     Instance Subtypes_Preorder : PreOrder Subtypes :=
       {| PreOrder_Reflexive := Subtypes_Reflexive; 
          PreOrder_Transitive := Subtypes_Transitive |}.
@@ -215,6 +215,24 @@ Module Types.
       eapply InducedEq.
       exact H0.
       exact H.
+    Qed.
+    Instance EqualTypes_Equivalence: Equivalence EqualTypes :=
+      {| Equivalence_Reflexive := EqualTypes_Reflexive;
+         Equivalence_Transitive := EqualTypes_Transitive;
+         Equivalence_Symmetric := EqualTypes_Symmetric |}.
+
+    Instance Subtypes_PartialOrder : PartialOrder EqualTypes Subtypes.
+    Proof.
+      compute.
+      intros.
+      split.
+      - split.
+        + apply EqualTypesAreSubtypes_left.
+          assumption.
+        + apply EqualTypesAreSubtypes_right.
+          assumption.
+      - intros [p1 p2].
+        apply InducedEq; assumption.
     Qed.
 
     Fact InterSym { σ τ }: σ ∩ τ ≤ τ ∩ σ.
