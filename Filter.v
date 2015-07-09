@@ -6,13 +6,15 @@ Module Types.
   | Inter : IntersectionType -> IntersectionType -> IntersectionType
   | Omega : IntersectionType.
 
-  Notation "σ → τ" := (Arr σ τ) (at level 88, right associativity).
-  Notation "σ ∩ τ" := (Inter σ τ) (at level 80, right associativity).
+  Infix "→" := (Arr) (at level 88, right associativity).
+  Notation "(→)" := Arr (only parsing).
+  Infix "∩" := (Inter) (at level 80, right associativity).
+  Notation "(∩)" := (Inter) (only parsing).
   Definition ω := (Omega).
 
   Module SubtypeRelation.
-    Reserved Notation "σ ≤ τ" (at level 89).
-    Reserved Notation "σ ~ τ" (at level 89).
+    Reserved Infix "≤" (at level 89).
+    Reserved Infix "~" (at level 89).
     
     Require Import Coq.Relations.Relation_Operators.
     Local Reserved Notation "σ ≤[ R ] τ" (at level 89).
@@ -30,17 +32,20 @@ Module Types.
     | R_OmegaTop : forall σ, σ ≤[R] ω
     | R_OmegaArrow : ω ≤[R] ω → ω
     where "σ ≤[ R ] τ" := (SubtypeRules (R := R) σ τ).
+    Notation "(≤[ R ])" := (SubtypeRules (R := R)) (only parsing).
 
     Definition SubtypeRules_Closure {R : IntersectionType -> IntersectionType -> Prop}: IntersectionType -> IntersectionType -> Prop :=
       clos_refl_trans IntersectionType (@SubtypeRules R).
     Local Notation "σ ≤*[ R ] τ" := (@SubtypeRules_Closure R σ τ) (at level 89).
-    Local Reserved Notation "σ ≤* τ" (at level 89).
+    Local Notation "(≤*[ R ])" := (@SubtypeRules_Closure R) (only parsing).
+    Local Reserved Infix "≤*" (at level 89).
 
     Unset Elimination Schemes.
     Inductive Subtypes: IntersectionType -> IntersectionType -> Prop :=
     | ST : forall σ τ, σ ≤* τ -> σ ≤ τ
     where "σ ≤ τ" := (Subtypes σ τ)
       and "σ ≤* τ" := (σ ≤*[Subtypes] τ).
+    Notation "(≤)" := (Subtypes) (only parsing).
     Set Elimination Schemes.
 
     Hint Unfold SubtypeRules_Closure.
@@ -168,7 +173,8 @@ Module Types.
     Inductive EqualTypes : IntersectionType -> IntersectionType -> Prop :=
     | InducedEq {σ τ}: σ ≤ τ -> τ ≤ σ -> σ ~ τ
     where "σ ~ τ" := (EqualTypes σ τ).
-      
+    Notation "(~)" := (EqualTypes) (only parsing).
+
     Definition EqualTypesAreSubtypes_left: forall σ τ, σ ~ τ -> σ ≤ τ :=
       fun _ _ eqtys =>
         match eqtys with
@@ -180,48 +186,45 @@ Module Types.
         | InducedEq _ _ _ r => r
         end.
     Coercion EqualTypesAreSubtypes_left : EqualTypes >-> Subtypes.
-    Coercion EqualTypesAreSubtypes_right : EqualTypes >-> Subtypes.
+    (*Coercion EqualTypesAreSubtypes_right : EqualTypes >-> Subtypes.*)
      
-    Hint Resolve InterMeetLeft InterMeetRight InterIdem InterDistrib OmegaTop OmegaArrow InducedEq.
+    Create HintDb SubtypeHints.
+    Hint Resolve InterMeetLeft InterMeetRight InterIdem InterDistrib OmegaTop OmegaArrow InducedEq: SubtypeHints.
 
     Require Import Coq.Classes.RelationClasses.
     Require Import Coq.Relations.Operators_Properties.
     Require Import Coq.Relations.Relation_Definitions.
-    Instance Subtypes_Reflexive : Reflexive Subtypes :=
+    Instance Subtypes_Reflexive : Reflexive (≤) :=
       fun σ => ST _ _ ((clos_rt_is_preorder _ _).(preord_refl _ _) σ).
-    Instance Subtypes_Transitive : Transitive Subtypes := 
+    Instance Subtypes_Transitive : Transitive (≤) := 
       fun σ τ ρ p1 p2 => ST _ _ ((clos_rt_is_preorder _ _).(preord_trans _ _) σ τ ρ (unST _ _ p1) (unST _ _ p2)).  
-    Instance Subtypes_Preorder : PreOrder Subtypes :=
+    Instance Subtypes_Preorder : PreOrder (≤) :=
       {| PreOrder_Reflexive := Subtypes_Reflexive; 
          PreOrder_Transitive := Subtypes_Transitive |}.
 
-    Instance EqualTypes_Reflexive: Reflexive EqualTypes :=
+    Instance EqualTypes_Reflexive: Reflexive (~) :=
       fun σ => InducedEq (reflexivity σ) (reflexivity σ).
-    Instance EqualTypes_Transitive: Transitive EqualTypes.
+    Instance EqualTypes_Transitive: Transitive (~).
     Proof.
       unfold Transitive.
-      intros.
-      destruct H.
-      destruct H0.
-      eapply InducedEq.
-      exact (transitivity H H0).
-      exact (transitivity H2 H1).
+      intros σ τ ρ p1 p2.
+      inversion p1.
+      inversion p2.
+      split; transitivity τ; assumption.
     Qed.
-    Instance EqualTypes_Symmetric: Symmetric EqualTypes.
+    Instance EqualTypes_Symmetric: Symmetric (~).
     Proof.
       unfold Symmetric.
-      intros.
-      destruct H.
-      eapply InducedEq.
-      exact H0.
-      exact H.
+      intros σ τ p.
+      inversion p.
+      apply InducedEq; assumption.
     Qed.
-    Instance EqualTypes_Equivalence: Equivalence EqualTypes :=
+    Instance EqualTypes_Equivalence: Equivalence (~) :=
       {| Equivalence_Reflexive := EqualTypes_Reflexive;
          Equivalence_Transitive := EqualTypes_Transitive;
          Equivalence_Symmetric := EqualTypes_Symmetric |}.
 
-    Instance Subtypes_PartialOrder : PartialOrder EqualTypes Subtypes.
+    Instance Subtypes_PartialOrder : PartialOrder (~) (≤).
     Proof.
       compute.
       intros.
@@ -235,17 +238,122 @@ Module Types.
         apply InducedEq; assumption.
     Qed.
 
-    Fact InterSym { σ τ }: σ ∩ τ ≤ τ ∩ σ.
+    Require Import Classes.Morphisms.
+    Class Monoid {A} (equiv : relation A) `{Equivalence A equiv} (f : A -> A -> A) (unit : A) :=
+      { associativity : forall x y z, equiv (f (f x y) z) (f x (f y z));
+        identity_left : forall x, equiv x (f unit x);
+        identity_right : forall x, equiv x (f x unit);
+        f_proper :> Proper (equiv ==> equiv ==> equiv) f }.
+
+    Fact InterAssociative: forall { σ τ ρ }, (σ ∩ τ) ∩ ρ ~ σ ∩ τ ∩ ρ.
     Proof.
-      apply (transitivity InterIdem).
-      apply SubtyDistrib; auto.
+      split.
+      - apply (transitivity InterIdem).
+        apply SubtyDistrib.
+        + apply (transitivity InterMeetLeft).
+          exact InterMeetLeft.
+        + apply (SubtyDistrib).
+          * exact InterMeetRight.
+          * reflexivity.
+      - apply (transitivity InterIdem).
+        apply (SubtyDistrib).
+        + apply (SubtyDistrib).
+          * reflexivity.
+          * exact InterMeetLeft.
+        + apply (transitivity InterMeetRight).
+          exact InterMeetRight.
+    Qed.
+    Hint Resolve InterAssociative : SubtypeHints.
+
+    Fact InterOmega_Left: forall {σ}, σ ~ ω ∩ σ.
+    Proof.
+      split.
+      - apply (transitivity InterIdem).
+        apply SubtyDistrib.
+        + exact OmegaTop.
+        + reflexivity.
+      - exact InterMeetRight.
+    Qed.
+    Hint Resolve InterOmega_Left : SubtypeHints.
+
+    Fact InterOmega_Right: forall {σ}, σ ~ σ ∩ ω.
+    Proof.
+      split.
+      - apply (transitivity InterIdem).
+        apply SubtyDistrib.
+        + reflexivity.
+        + exact OmegaTop.
+      - exact InterMeetLeft.
+    Qed.
+    Hint Resolve InterOmega_Right : SubtypeHints.
+    
+    Instance Inter_Proper_ST : Proper ((≤) ==> (≤) ==> (≤)) (∩).
+    Proof.
+      compute.
+      intros.
+      apply SubtyDistrib; assumption.
+    Qed.
+
+    Instance Inter_Proper_EQ : Proper ((~) ==> (~) ==> (~)) (∩).
+    Proof.
+      compute.
+      intros * * p1; inversion p1.
+      intros * * p2; inversion p2.
+      split; apply Inter_Proper_ST; assumption.
+    Qed.
+   
+    Instance Arr_Proper_ST : Proper (inverse (≤) ==> (≤) ==> (≤)) (→).
+    Proof.
+      compute.
+      intros * * p1.
+      intros * * p2.
+      apply CoContra; assumption.
     Qed.
     
-    Fact Omega_eq: ω ~ ω.
+    Instance Arr_Proper_EQ : Proper ((~) ==> (~) ==> (~)) (→).
     Proof.
-      reflexivity.
+      compute.
+      intros * * p1; inversion p1.
+      intros * * p2; inversion p2.
+      split; apply Arr_Proper_ST; assumption.
     Qed.
-    Hint Resolve Omega_eq.
+
+    Instance Inter_Monoid : Monoid (~) (∩) ω :=
+      {| associativity := @InterAssociative;
+         identity_left := @InterOmega_Left;
+         identity_right := @InterOmega_Right;
+         f_proper := Inter_Proper_EQ |}.
+    
+    Class AbelianMonoid {A} (equiv : relation A) `{Equivalence A equiv} (f : A -> A -> A) (unit : A) :=
+      { monoid :> Monoid equiv f unit;
+        commutativity : forall x y, equiv (f x y) (f y x) }.
+
+    Fact InterComm_ST: forall { σ τ }, σ ∩ τ ≤ τ ∩ σ.
+    Proof.
+      intros σ τ.
+      apply (transitivity InterIdem).
+      apply SubtyDistrib; auto with SubtypeHints.
+    Qed.
+    Hint Resolve InterComm_ST : SubtypeHints.
+
+    Fact InterComm_EQ: forall σ τ, σ ∩ τ ~ τ ∩ σ.
+    Proof.
+      intros σ τ.
+      split; apply InterComm_ST.
+    Qed.
+    Hint Resolve InterComm_EQ : SubtypeHints.
+
+    Instance Inter_AbelianMonoid : AbelianMonoid (~) (∩) ω :=
+      {| monoid := Inter_Monoid;
+         commutativity := InterComm_EQ |}.
+    
+    Fact Inter_both : forall {σ τ ρ}, σ ≤ τ -> σ ≤ ρ -> σ ≤ τ ∩ ρ.
+    Proof.
+      intros.
+      apply (transitivity InterIdem).
+      apply SubtyDistrib; assumption.
+    Qed.
+    Hint Resolve Inter_both : SubtypeHints.
 
     Fact Arrow_Tgt_Omega_eq {σ ρ : IntersectionType}:
       ω ~ ρ -> ω ~ σ → ρ.
@@ -258,24 +366,21 @@ Module Types.
         + exact rhoOmega.
       - exact OmegaTop.
     Qed.
-    Hint Resolve Arrow_Tgt_Omega_eq.
+    Hint Resolve Arrow_Tgt_Omega_eq : SubtypeHints.
 
+    Require Import Setoids.Setoid.
     Fact Omega_Inter_Omega_eq {σ ρ : IntersectionType}:
        ω ~ σ -> ω ~ ρ -> ω ~ σ ∩ ρ.
     Proof.
-      intros sigmaOmega rhoOmega.
-      split.
-      - apply (transitivity InterIdem).
-        apply SubtyDistrib.
-        + exact sigmaOmega.
-        + exact rhoOmega.
-      - exact OmegaTop.
+      intros σω ρω.
+      rewrite <- σω.
+      rewrite <- ρω.
+      apply identity_left.
     Qed.
-    Hint Resolve Omega_Inter_Omega_eq.
+    Hint Resolve Omega_Inter_Omega_eq : SubtypeHints.
 
 
     Section BetaLemmas.
-
       Reserved Notation "↑ω σ" (at level 89).
       Inductive Ω: IntersectionType -> Prop :=
         | OF_Omega : Ω ω
@@ -285,8 +390,8 @@ Module Types.
             
       Fact Ω_principal: forall σ, ↑ω σ -> ω ~ σ.
       Proof.
-        intros. 
-        induction H; auto.
+        intros σ ωσ. 
+        induction ωσ; auto with SubtypeHints.
       Qed.
 
       Fact Ω_upperset:
@@ -294,7 +399,7 @@ Module Types.
       Proof.
         intros σ τ H.
         induction H; intro Hω; try solve [ inversion Hω; auto ].
-        - apply OF_Inter; auto.
+        - apply OF_Inter; assumption.
         - inversion Hω as [ | | * * σρω στω ].
           inversion σρω as [ | * * ρω | ].
           inversion στω as [ | * * τω | ].
@@ -360,10 +465,10 @@ Module Types.
         - reflexivity.
         - transitivity σ.
           + exact InterMeetLeft.
-          + exact IHσLEn.
+          + assumption.
         - transitivity τ.
           + exact InterMeetRight.
-          + exact IHσLEn.
+          + assumption.
       Qed.
       
       Fact VariableIdeal_lowerset:
@@ -372,17 +477,22 @@ Module Types.
         intros σ τ σLEτ.
         induction σLEτ;
           try solve [ intros n H; inversion H ].
-        - exact (fun n => VI_InterLeft n _ _).
-        - exact (fun n => VI_InterRight n _ _).
-        - intros n H.
-          inversion H; exact H1.
-        - intros n H.
+        - intro; apply VI_InterLeft.
+        - intro; apply VI_InterRight.
+        - intros * H; inversion H; assumption.
+        - intros * H.
           inversion H.
-          + exact (VI_InterLeft _ _ _ (IHσLEτ1 _ H1)).
-          + exact (VI_InterRight _ _ _ (IHσLEτ2 _ H1)).
-        - exact (fun n p => p).
-        - intros n H.
-          exact (IHσLEτ1 _ (IHσLEτ2 _ H)).
+          + apply (VI_InterLeft).
+            apply (IHσLEτ1).
+            assumption.
+          + apply (VI_InterRight).
+            apply (IHσLEτ2).
+            assumption.
+        - intros; assumption.
+        - intros.
+          apply (IHσLEτ1).
+          apply (IHσLEτ2).
+          assumption.
       Qed.
       
       Corollary VariableIdeal_principalElement:
@@ -425,24 +535,24 @@ Module Types.
         forall σ τ ρ, ↓[σ] → [τ] ρ -> ρ ≤ σ → τ.
       Proof.
         intros σ τ ρ ρLEστ.
-        induction ρLEστ.
+        induction ρLEστ as [ | | | | * * ρ1 * ρ2 ].
         - transitivity ω.
           + exact OmegaTop.
-          + exact (Ω_principal _ (OF_Arrow _ _ H)).
-        - exact (CoContra H H0).
-        - transitivity σ'.
-          + exact InterMeetLeft.
-          + exact IHρLEστ.
-        - transitivity τ'.
-          + exact InterMeetRight.
-          + exact IHρLEστ.
+          + apply (EqualTypesAreSubtypes_left).
+            apply (Ω_principal).
+            apply (OF_Arrow).
+            assumption.
+        - apply (CoContra); assumption.
+        - apply (transitivity InterMeetLeft).
+          assumption.
+        - apply (transitivity InterMeetRight).
+          assumption.
         - transitivity ((σ → ρ1) ∩ (σ → ρ2)).
-          + exact (SubtyDistrib IHρLEστ1 IHρLEστ2).
-          + transitivity (σ → ρ1 ∩ ρ2).
-            * exact InterDistrib.
-            * apply CoContra.
-              { reflexivity. } 
-              { exact H. }
+          + apply (SubtyDistrib); assumption.
+          + apply (transitivity InterDistrib).
+            apply CoContra.
+            * reflexivity. 
+            * assumption.
       Qed.
 
       Fact ArrowIdeal_weaken:
@@ -450,130 +560,140 @@ Module Types.
       Proof.
         intros σ τ ρ ρLEστ.
         induction ρLEστ; intros τ'' τLEτ''.
-        - set (H' := Ω_upperset _ _ τLEτ'' H).
-          auto.
-        - set (H0' := transitivity H0 τLEτ'').
-          auto.
-        - set (IHρLEστ' := IHρLEστ τ'' τLEτ''). 
-          auto.
-        - set (IHρLEστ' := IHρLEστ τ'' τLEτ''). 
-          auto.
-        - set (IHρLEστ1' := IHρLEστ1 ρ1 (reflexivity _)).
-          set (IHρLEστ2' := IHρLEστ2 ρ2 (reflexivity _)).
-          set (ρ1ρ2LEτ'' := transitivity H τLEτ'').
-          exact (AI_Inter _ _ _ _ _ _ IHρLEστ1' IHρLEστ2' ρ1ρ2LEτ'').
+        - apply AI_Omega.
+          apply (Ω_upperset τ); assumption.
+        - apply AI_Arrow.
+          + assumption.
+          + transitivity τ; assumption.
+        - apply AI_InterLeft; auto.
+        - apply AI_InterRight; auto. 
+        - eapply AI_Inter; eauto.
+          etransitivity; eassumption.
       Qed.
+
+      Fact ArrowIdeal_comm:
+        forall σ τ1 τ2 ρ, ↓[σ] → [τ1 ∩ τ2] ρ -> ↓[σ] → [τ2 ∩ τ1] ρ.
+      Proof.
+        intros.
+        eapply ArrowIdeal_weaken.
+        - eassumption.
+        - rewrite commutativity.
+          reflexivity.
+      Qed.
+
+      Fact ArrowIdeal_merge:
+        forall σ τ1 τ2 ρ1 ρ2, 
+        forall τ τ',
+        τ1 ∩ τ2 ≤ τ ∩ τ' ->
+        ↓[σ] → [τ1] ρ1 -> ↓[σ] → [τ2] ρ2 ->
+        ↓[σ] → [τ ∩ τ'] ρ1 ∩ ρ2.
+      Proof.
+        intros.
+        eapply ArrowIdeal_weaken.
+        - eapply AI_Inter.
+          + eassumption.
+          + eassumption.
+          + eassumption.
+        - reflexivity.
+      Qed.
+
+      Fact ArrowIdeal_InterOmega_left:
+        forall σ τ τ' ρ, Ω τ ->  ↓[σ] → [τ'] ρ -> ↓[σ] → [τ ∩ τ'] ρ.
+      Proof.
+        intros.
+        eapply ArrowIdeal_weaken.
+        - eassumption.
+        - apply Inter_both.
+          transitivity ω .
+          + exact (OmegaTop).
+          + apply EqualTypesAreSubtypes_left.
+            apply Ω_principal.
+            assumption.
+          + reflexivity.
+      Qed.
+
+      Fact ArrowIdeal_InterOmega_right:
+        forall σ τ τ' ρ, Ω τ ->  ↓[σ] → [τ'] ρ -> ↓[σ] → [τ' ∩ τ] ρ.
+      Proof.
+        intros.
+        apply ArrowIdeal_comm.
+        apply ArrowIdeal_InterOmega_left; assumption.
+      Qed.
+
 
       Fact ArrowIdeal_both:
         forall τ ρ1 ρ2 σ, ↓[σ] → [ρ1] τ -> ↓[σ] → [ρ2] τ -> ↓[σ] → [ρ1 ∩ ρ2] τ.
       Proof.
         intro τ.
-        induction τ;
-          intros ρ1 ρ2 σ H1 H2;
-          inversion H1;
+        induction τ as [ | | * IH1 * IH2 | * x * y ];
+          intros * * * H1 H2;
+          inversion H1 as [ | | | | * * * * p1H1 p2H1 ];
+          inversion H2 as [ | | | | * * * * p1H2 p2H2 ];
           try solve [
-            set (ρ1ω := Ω_principal _ H);
-            assert (ρ2LEρ1ρ2 : ρ2 ≤ ρ1 ∩ ρ2);
-            solve [
-              apply (transitivity InterIdem);
-              apply SubtyDistrib;
-              solve [
-                transitivity ω; solve [ auto | exact ρ1ω ]
-                |  reflexivity ]
-            | exact (ArrowIdeal_weaken _ _ _ H2 _ ρ2LEρ1ρ2) ] ];
-          inversion H2 as [ * ωρ2 ρeq  |  |  |  |  ];
-          try solve [
-            set (ρ2ω := Ω_principal _ ωρ2);
-            assert (ρ1LEρ1ρ2 : ρ1 ≤ ρ1 ∩ ρ2);
-            solve [
-              apply (transitivity InterIdem);
-              apply SubtyDistrib;
-              solve [
-                reflexivity
-                | transitivity ω; solve [ auto | exact ρ2ω ] ]
-            | exact (ArrowIdeal_weaken _ _ _ H1 _ ρ1LEρ1ρ2) ] ].
-        - apply AI_Arrow.
-          + auto.
+            apply AI_Omega; apply OF_Inter; assumption
+            | apply ArrowIdeal_InterOmega_left; assumption
+            | apply ArrowIdeal_InterOmega_right; assumption
+            | apply AI_Arrow; auto with SubtypeHints
+            | apply AI_InterLeft; auto with SubtypeHints
+            | apply AI_InterRight; auto with SubtypeHints ];
+          first [ eapply AI_Inter; 
+            [ solve [ eauto with SubtypeHints ] |
+              solve [ eauto with SubtypeHints ] |
+              solve [ eauto with SubtypeHints ] ] || idtac ] .
+        - eapply ArrowIdeal_merge.
+          rewrite associativity.
+          eapply SubtyDistrib.
+          + reflexivity.
+          + eassumption.
+          + eauto.
+          + assumption.
+        - eapply ArrowIdeal_comm.
+          eapply ArrowIdeal_merge.
+          rewrite <- associativity.
+          eapply SubtyDistrib.
+          + eassumption.
+          + reflexivity.
+          + assumption.
+          + eauto.
+        - eapply ArrowIdeal_comm.
+          eapply ArrowIdeal_merge.
+          rewrite associativity.
+          eapply SubtyDistrib.
+          + reflexivity.
+          + eassumption.
+          + eauto.
+          + assumption.
+        - eapply ArrowIdeal_merge.
+          rewrite <- associativity.
+          eapply SubtyDistrib.
+          + eassumption.
+          + reflexivity.
+          + assumption.
+          + eauto.
+        - eapply AI_Inter.
+          + eapply IH1.
+            * exact p1H1.
+            * exact p1H2.
+          + eapply IH2.
+            * exact p2H1.
+            * exact p2H2. 
           + apply (transitivity InterIdem).
             apply SubtyDistrib.
-            * auto.
-            * auto. 
-        - apply AI_InterLeft.
-          apply IHτ1; auto.
-        - apply (AI_Inter _ _ _ _ ρ1 ρ2); auto;
-          reflexivity.
-        - apply (AI_Inter _ _ _ _ (ρ0 ∩ ρ1) ρ3).
-          + apply IHτ1; auto.
-          + auto.
-          + transitivity (ρ1 ∩ ρ0 ∩ ρ3).
-            * transitivity ((ρ1 ∩ ρ0) ∩ ρ3).
-              { apply SubtyDistrib.
-                - apply InterSym.
-                - reflexivity. }
-              { apply (transitivity InterIdem).
-                apply SubtyDistrib.
-                - apply (transitivity InterMeetLeft).
-                  auto.
-                - apply SubtyDistrib.
-                  + auto.
-                  + reflexivity. }
-            * apply SubtyDistrib.
-              { reflexivity. }
-              { auto. }
-       - apply (AI_Inter _ _ _ _ ρ2 ρ1); auto.
-         exact (InterSym).
-       - apply AI_InterRight.
-         apply IHτ2; auto.
-       - apply (AI_Inter _ _ _ _ ρ0 (ρ1 ∩ ρ3)).
-          + auto.
-          + apply IHτ2; auto.
-          + transitivity (ρ1 ∩ ρ0 ∩ ρ3).
-            * apply (transitivity InterIdem).
-              apply SubtyDistrib.
-              { apply (transitivity InterMeetRight).
-                auto. }
-              { apply SubtyDistrib.
-                reflexivity.
-                auto. }
-            * apply SubtyDistrib.
-              { reflexivity. }
-              { auto. }
-       - apply (AI_Inter _ _ _ _ (ρ0 ∩ ρ2) ρ3).
-          + apply IHτ1; auto.
-          + auto.
-          + transitivity ((ρ0 ∩ ρ3) ∩ ρ2).
-            * apply (transitivity InterIdem).
-              apply SubtyDistrib.
-              { apply (SubtyDistrib).
-                - auto.
-                - reflexivity. }
-              { apply (transitivity InterMeetLeft).
-                auto. }
-            * apply SubtyDistrib.
-              { auto. }
-              { reflexivity. }
-       - apply (AI_Inter _ _ _ _ ρ0 (ρ2 ∩ ρ3)).
-          + auto.
-          + apply IHτ2; auto.
-          + transitivity ((ρ0 ∩ ρ3) ∩ ρ2).
-            * apply (transitivity InterIdem).
-              apply SubtyDistrib.
-              { apply (SubtyDistrib).
-                - reflexivity.
-                - auto. }
-              { apply (transitivity InterMeetRight).
-                auto. }
-            * apply SubtyDistrib.
-              { auto. }
-              { reflexivity. }
-       - apply (AI_Inter _ _ _ _ (ρ0 ∩ ρ4) (ρ3 ∩ ρ5)).
-          + apply IHτ1; auto.
-          + apply IHτ2; auto.
-          + transitivity ((ρ0 ∩ ρ3) ∩ ρ4 ∩ ρ5).
-            * apply (transitivity InterIdem).
-              apply SubtyDistrib;
-                apply (SubtyDistrib); auto.
-            * apply SubtyDistrib; auto.
+            * rewrite <- associativity.
+              apply (transitivity InterMeetLeft).
+              rewrite commutativity.
+              rewrite <- associativity.
+              apply (transitivity InterMeetLeft).
+              rewrite commutativity.
+              assumption.
+            * rewrite <- associativity.
+              rewrite commutativity.
+              rewrite <- associativity.
+              apply (transitivity InterMeetLeft).
+              rewrite commutativity.
+              rewrite associativity.
+              apply (transitivity InterMeetRight).
+              assumption.
       Qed.
 
       Fact ArrowIdeal_lowerset:
@@ -585,7 +705,8 @@ Module Types.
           intros σ'' τ'' H;
           inversion H;
           auto.
-        - exact (ArrowIdeal_weaken _ _ _ (ArrowIdeal_both _ _ _ _ H2 H3) _ H4).
+        - eapply ArrowIdeal_weaken; [|eassumption].
+          eapply ArrowIdeal_both; eassumption.
         - apply (AI_Inter _ _ _ _ ρ τ).
           + exact (AI_Arrow _ _ _ _ H2 (reflexivity ρ)).
           + exact (AI_Arrow _ _ _ _ H2 (reflexivity τ)). 
@@ -753,8 +874,8 @@ Module Types.
         - exact (VI_Var _).
         - exact (AI_Arrow _ _ _ _ (reflexivity _) (reflexivity _)).
         - split.
-          + apply (Ideal_lowerset _ σ1); auto.
-          + apply (Ideal_lowerset _ σ2); auto.
+          + apply (Ideal_lowerset _ σ1); auto with SubtypeHints.
+          + apply (Ideal_lowerset _ σ2); auto with SubtypeHints.
         - exact (OF_Omega).
       Qed.
       
@@ -783,7 +904,30 @@ Module Types.
 
       Instance Filter_Reflexive : Reflexive Filter := Filter_refl.
 
-   
+      Lemma Ideal_transitive:
+        forall σ τ ρ, ↓[σ] τ -> ↓[τ] ρ -> ↓[σ] ρ.
+      Proof.
+        intros σ τ ρ στ τρ.
+        apply (Ideal_lowerset ρ σ).
+        - transitivity τ;
+            apply Ideal_principal;
+            assumption.
+        - reflexivity.
+      Qed.
+
+      Instance Ideal_Transitive : Transitive Ideal := Ideal_transitive.  
+
+      Lemma Filter_transitive:
+        forall σ τ ρ, ↑[σ] τ -> ↑[τ] ρ -> ↑[σ] ρ.
+      Proof.
+        intros σ τ ρ στ τρ.
+        apply Ideal_Filter.
+        transitivity τ;
+          apply Filter_Ideal; assumption.
+      Qed.
+
+      Instance Filter_Transitive : Transitive Filter := Filter_transitive.
+
       Lemma Ideal_principalElement:
         forall σ τ, τ ≤ σ -> ↓[σ] τ.
       Proof.
@@ -795,7 +939,7 @@ Module Types.
           exact (ArrowIdeal_principalElement _ _ _).
         - intros τ τLEσ1σ2.
           split; [ apply IHσ1 | apply IHσ2 ];
-            transitivity (σ1 ∩ σ2); auto.
+            transitivity (σ1 ∩ σ2); auto with SubtypeHints.
         - intros.
           exact OF_Omega.
       Qed.
@@ -809,10 +953,209 @@ Module Types.
         assumption.
       Qed.
 
+      Require Import Logic.Decidable.
+      Fact Ω_decidable: forall τ, decidable (Ω τ).
+      Proof.
+        intro τ.
+        induction τ.
+        - right.
+          unfold not.
+          intro ωτ.
+          inversion ωτ.
+        - inversion IHτ2.
+          + left.
+            apply OF_Arrow.
+            assumption.
+          + right.
+            intro ωτ1τ2.
+            inversion ωτ1τ2.
+            contradiction.
+        - inversion IHτ1; inversion IHτ2;
+            solve [ left; apply OF_Inter; assumption
+                  | right; intro ωτ1τ2; inversion ωτ1τ2; contradiction ].
+        - left; exact OF_Omega.
+      Qed.
 
+      Fact ΩIdeal_decidable: forall σ, decidable (↓[ω] σ).
+      Proof.
+        intros.
+        left.
+        simpl.
+        exact OF_Omega.
+      Qed.
+      (*
+      Fact Ideal_decidable_Filter_decidable:
+        forall τ, (forall σ, decidable (↓[σ] τ)) -> forall σ, decidable (↑[σ] τ).
+      Proof.
+        intros τ στ_dec σ.
+        set (στ := στ_dec σ).
+        induction σ.
+        - inversion στ; left. simpl. inversion H. reflexivity.
+        - inversion H.
+        - inversion H.*)
+
+      Lemma VariableIdeal_decidable: forall n τ, decidable (↓α[n] τ).
+      Proof.
+        intros n τ.
+        induction τ;
+          try solve [ right; intro τLEσ; inversion τLEσ ].
+        - assert (varEq : {n = n0} + {~n = n0}).
+          * decide equality.
+          * inversion varEq as [ equal | notEqual ].
+            { rewrite equal. left. fold (Ideal (Var n0) (Var n0)). reflexivity. }
+            { right. unfold not. intro n0LEn. inversion n0LEn. contradiction. }
+        - inversion IHτ1; inversion IHτ2;
+            try solve [ left; apply VI_InterLeft; assumption
+                  | left; apply VI_InterRight; assumption
+                  | right; unfold not; intro τLEσ; inversion τLEσ; contradiction ].
+      Qed.
+
+      Lemma VariableFilter_decidable: forall n τ, decidable (↑α[n] τ).
+      Proof.
+        intros n τ.
+        induction τ.
+        - assert (varEq : {n0 = n} + {~n0 = n}).
+          * decide equality.
+          * inversion varEq as [ equal | notEqual ].
+            { rewrite equal. left. fold (Ideal (Var n0) (Var n0)). reflexivity. }
+            { right. unfold not. intro nLEn0. inversion nLEn0. contradiction. }
+        - destruct (Ω_decidable τ2).
+          + left. simpl. apply AI_Omega. assumption.
+          + right. unfold not. intro nLEτ1τ2. inversion nLEτ1τ2. contradiction.
+        - inversion IHτ1; inversion IHτ2;
+            solve [ left; split; assumption
+                  | right; unfold not; intros nLEτ1τ2; inversion nLEτ1τ2; contradiction ].
+        - simpl. exact (ΩIdeal_decidable (Var n)).
+      Qed.
+
+      Axiom bailOut: forall σ τ, decidable (↓[σ] τ).
+      Axiom bailOut2 : forall σ τ, decidable (↑[σ] τ).
+
+      Fixpoint Ideal_decidable σ τ: decidable (↓[σ] τ)
+      with Filter_decidable σ τ: decidable (↑[σ] τ).
+      Proof.
+        - case σ.
+          + intro.
+            apply VariableIdeal_decidable.
+          + intros σ' τ'.
+            case (Ω_decidable τ').
+            * intro.
+              left.
+              apply (AI_Omega).
+              assumption.
+            * intro.
+              case τ;
+                try solve [
+                  intros;
+                  right;
+                  unfold not;
+                  intro τLEσ'τ';
+                  inversion τLEσ'τ';
+                  contradiction ].
+              { intros σ'' τ''.
+                set (σ'LEσ'' := Filter_decidable σ' σ'').
+                set (τ''LEτ' := Ideal_decidable τ' τ'').
+                case τ''LEτ'.
+                - case σ'LEσ''.
+                  + left.
+                    intros.
+                    apply AI_Arrow; apply Ideal_principal.
+                    * apply Filter_Ideal.
+                      assumption.
+                    * assumption.
+                  + intros.
+                    right.
+                    intro σ''τ''LEσ'τ'.
+                    inversion σ''τ''LEσ'τ' as [ * | * * pσ  | | | ].
+                    * contradiction.
+                    * set (pσ' := Ideal_Filter _ _ (Ideal_principalElement _ _ pσ)).
+                      contradiction.
+                - intros.
+                  right.
+                  intros σ''τ''LEσ'τ'.
+                  inversion σ''τ''LEσ'τ' as [ * | * * pσ pτ | | | ].
+                  + contradiction. 
+                  + set (pτ' := Ideal_principalElement _ _ pτ).
+                    contradiction. }
+              {
+                    
+                    
+                apply AI_Arrow.
+          | xxx => bailOut xxx τ
+        end
+      with Filter_decidable σ τ: decidable (↑[σ] τ) :=
+        match σ return decidable (↑[σ] τ) with
+          | Var n => VariableFilter_decidable n τ
+          | Omega => Ω_decidable τ
+          (*| σ' → τ' =>*)
+          | xxx => bailOut2 xxx τ
+        end.
+
+      Proof.
+        intro ρ.
+        induction ρ.
+        Focus 2.
+
+
+
+        induction σ; intro τ;
+          induction τ;
+          try solve [ right; unfold not; intro τLEσ; inversion τLEσ ].
+        Focus 5.
+
+        - assert (varEq : {n = n0} + {~n = n0}).
+          + decide equality.
+          + inversion varEq as [ equal | notEqual ].
+            * rewrite equal.
+              left.
+              reflexivity.
+            * right. 
+              unfold not.
+              intro nLEn0.
+              inversion nLEn0.
+              contradiction.
+        - destruct (Ω_decidable σ2).
+          + left.
+            apply AI_Omega.
+            assumption.
+          + right.
+            unfold not.
+            intro τLEσ.
+            inversion τLEσ.
+            contradiction.
+        - inversion IHσ1; inversion IHσ2;
+              solve [ left; split; assumption
+                    | right; unfold not; intro τLEσ; inversion τLEσ; contradiction ].
+        - left; exact OF_Omega. 
+        - destruct (IHτ2 σ2).
+          + destruct (IHτ1 σ1).
+            * left; apply AI_Arrow; apply Ideal_principal.
+              { 
+              eapply Ideal_principal.
+          + right.
+            unfold not.
+            intro τLEσ; inversion τLEσ.
+            
+
+
+              try solve [ left; apply VI_InterLeft; assumption
+                    | left; apply VI_InterRight; assumption
+                    | right; unfold not; intro le; inversion le; contradiction ].
+        - induction τ.
+          +           + 
+          + right.
+            unfold not.
+            intro.
+            inversion H.
+            inversion H0.
+
+            
+            
+        unfold decidable.
 
       Lemma IdealFilter_dual:
         forall σ τ, ↓[σ] τ -> ↑[τ] σ.
+      Proof.
 
       
          
