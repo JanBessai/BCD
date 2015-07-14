@@ -211,14 +211,14 @@ Module Types.
       inversion p1.
       inversion p2.
       split; transitivity τ; assumption.
-    Qed.
+    Defined.
     Instance EqualTypes_Symmetric: Symmetric (~).
     Proof.
       unfold Symmetric.
       intros σ τ p.
       inversion p.
       apply InducedEq; assumption.
-    Qed.
+    Defined.
     Instance EqualTypes_Equivalence: Equivalence (~) :=
       {| Equivalence_Reflexive := EqualTypes_Reflexive;
          Equivalence_Transitive := EqualTypes_Transitive;
@@ -236,7 +236,7 @@ Module Types.
           assumption.
       - intros [p1 p2].
         apply InducedEq; assumption.
-    Qed.
+    Defined.
 
     Require Import Classes.Morphisms.
     Class Monoid {A} (equiv : relation A) `{Equivalence A equiv} (f : A -> A -> A) (unit : A) :=
@@ -262,7 +262,7 @@ Module Types.
           * exact InterMeetLeft.
         + apply (transitivity InterMeetRight).
           exact InterMeetRight.
-    Qed.
+    Defined.
     Hint Resolve InterAssociative : SubtypeHints.
 
     Fact InterOmega_Left: forall {σ}, σ ~ ω ∩ σ.
@@ -273,7 +273,7 @@ Module Types.
         + exact OmegaTop.
         + reflexivity.
       - exact InterMeetRight.
-    Qed.
+    Defined.
     Hint Resolve InterOmega_Left : SubtypeHints.
 
     Fact InterOmega_Right: forall {σ}, σ ~ σ ∩ ω.
@@ -284,7 +284,7 @@ Module Types.
         + reflexivity.
         + exact OmegaTop.
       - exact InterMeetLeft.
-    Qed.
+    Defined.
     Hint Resolve InterOmega_Right : SubtypeHints.
     
     Instance Inter_Proper_ST : Proper ((≤) ==> (≤) ==> (≤)) (∩).
@@ -292,7 +292,7 @@ Module Types.
       compute.
       intros.
       apply SubtyDistrib; assumption.
-    Qed.
+    Defined.
 
     Instance Inter_Proper_EQ : Proper ((~) ==> (~) ==> (~)) (∩).
     Proof.
@@ -300,7 +300,7 @@ Module Types.
       intros * * p1; inversion p1.
       intros * * p2; inversion p2.
       split; apply Inter_Proper_ST; assumption.
-    Qed.
+    Defined.
    
     Instance Arr_Proper_ST : Proper (inverse (≤) ==> (≤) ==> (≤)) (→).
     Proof.
@@ -308,7 +308,7 @@ Module Types.
       intros * * p1.
       intros * * p2.
       apply CoContra; assumption.
-    Qed.
+    Defined.
     
     Instance Arr_Proper_EQ : Proper ((~) ==> (~) ==> (~)) (→).
     Proof.
@@ -316,7 +316,7 @@ Module Types.
       intros * * p1; inversion p1.
       intros * * p2; inversion p2.
       split; apply Arr_Proper_ST; assumption.
-    Qed.
+    Defined.
 
     Instance Inter_Monoid : Monoid (~) (∩) ω :=
       {| associativity := @InterAssociative;
@@ -333,14 +333,14 @@ Module Types.
       intros σ τ.
       apply (transitivity InterIdem).
       apply SubtyDistrib; auto with SubtypeHints.
-    Qed.
+    Defined.
     Hint Resolve InterComm_ST : SubtypeHints.
 
     Fact InterComm_EQ: forall σ τ, σ ∩ τ ~ τ ∩ σ.
     Proof.
       intros σ τ.
       split; apply InterComm_ST.
-    Qed.
+    Defined.
     Hint Resolve InterComm_EQ : SubtypeHints.
 
     Instance Inter_AbelianMonoid : AbelianMonoid (~) (∩) ω :=
@@ -352,7 +352,7 @@ Module Types.
       intros.
       apply (transitivity InterIdem).
       apply SubtyDistrib; assumption.
-    Qed.
+    Defined.
     Hint Resolve Inter_both : SubtypeHints.
 
     Fact Arrow_Tgt_Omega_eq {σ ρ : IntersectionType}:
@@ -365,7 +365,7 @@ Module Types.
         + exact OmegaTop.
         + exact rhoOmega.
       - exact OmegaTop.
-    Qed.
+    Defined.
     Hint Resolve Arrow_Tgt_Omega_eq : SubtypeHints.
 
     Require Import Setoids.Setoid.
@@ -376,7 +376,7 @@ Module Types.
       rewrite <- σω.
       rewrite <- ρω.
       apply identity_left.
-    Qed.
+    Defined.
     Hint Resolve Omega_Inter_Omega_eq : SubtypeHints.
 
 
@@ -392,7 +392,7 @@ Module Types.
       Proof.
         intros σ ωσ. 
         induction ωσ; auto with SubtypeHints.
-      Qed.
+      Defined.
 
       Fact Ω_upperset:
         forall σ τ, σ ≤ τ -> ↑ω σ -> ↑ω τ.
@@ -411,14 +411,14 @@ Module Types.
         - exact OF_Omega.
         - exact (OF_Arrow _ _ OF_Omega).
         - exact Hω.
-      Qed.
+      Defined.
 
       Corollary Ω_principalElement:
         forall σ, ω ≤ σ -> ↑ω σ.
       Proof.
         intros σ ωLEσ.
         exact (Ω_upperset _ _ ωLEσ OF_Omega).
-      Qed.
+      Defined.
       
       Fact Ω_directed:
         forall σ τ, ↑ω σ -> ↑ω τ -> (↑ω ω) /\ (ω ≤ σ) /\ (ω ≤ τ).
@@ -428,7 +428,7 @@ Module Types.
         - exact (OF_Omega).
         - exact (Ω_principal _ ωLEσ).
         - exact (Ω_principal _ ωLEτ).
-      Qed.
+      Defined.
 
       Fact Var_never_omega:
         forall n, ω ≤ Var n -> False.
@@ -436,7 +436,7 @@ Module Types.
         intros n ωLEn.
         set (ωn := Ω_upperset _ _ ωLEn OF_Omega).
         inversion ωn.
-      Qed.
+      Defined.
 
       Lemma Beta_Omega:
         forall σ τ, ω ~ σ → τ <-> ω ~ τ.
@@ -448,7 +448,7 @@ Module Types.
           inversion στω as [ | * * ωτ | ].
           exact (Ω_principal _ ωτ).
         - exact Arrow_Tgt_Omega_eq.
-      Qed.
+      Defined.
      
       Reserved Notation "↓α[ n ] σ" (at level 89).
       Inductive VariableIdeal (n : nat): IntersectionType -> Prop :=
@@ -469,7 +469,7 @@ Module Types.
         - transitivity τ.
           + exact InterMeetRight.
           + assumption.
-      Qed.
+      Defined.
       
       Fact VariableIdeal_lowerset:
         forall σ τ, σ ≤ τ -> forall n, ↓α[n] τ -> ↓α[n] σ.
@@ -493,14 +493,14 @@ Module Types.
           apply (IHσLEτ1).
           apply (IHσLEτ2).
           assumption.
-      Qed.
+      Defined.
       
       Corollary VariableIdeal_principalElement:
         forall σ n, σ ≤ (Var n) -> ↓α[n] σ.
       Proof.
         intros σ n σLEn.
         exact (VariableIdeal_lowerset _ _ σLEn _ (VI_Var n)).
-      Qed.
+      Defined.
       
       Fact VariableIdeal_directed:
         forall n σ τ, ↓α[n] σ -> ↓α[n] τ -> (↓α[n] (Var n)) /\ (σ ≤ (Var n)) /\ (τ ≤ (Var n)).
@@ -510,14 +510,14 @@ Module Types.
         - exact (VI_Var n).
         - exact (VariableIdeal_principal _ _ σLEn).
         - exact (VariableIdeal_principal _ _ τLEn).
-      Qed.
+      Defined.
 
       Fact VariableIdeal_prime:
         forall σ τ n, ↓α[n] σ ∩ τ -> (↓α[n] σ) \/ (↓α[n] τ).
       Proof.
         intros σ τ n στLEn.
         inversion στLEn as [ | * * σLEn | * * τLEn ]; auto.
-      Qed.
+      Defined.
       
       Reserved Notation "↓[ σ ] → [ τ ] ρ" (at level 89).
       Inductive ArrowIdeal (σ τ : IntersectionType): IntersectionType -> Prop :=
@@ -553,7 +553,7 @@ Module Types.
             apply CoContra.
             * reflexivity. 
             * assumption.
-      Qed.
+      Defined.
 
       Fact ArrowIdeal_weaken:
         forall σ τ ρ, ↓[σ] → [τ] ρ -> forall τ', τ ≤ τ' -> ↓[σ] → [τ'] ρ.
@@ -569,7 +569,7 @@ Module Types.
         - apply AI_InterRight; auto. 
         - eapply AI_Inter; eauto.
           etransitivity; eassumption.
-      Qed.
+      Defined.
 
       Fact ArrowIdeal_comm:
         forall σ τ1 τ2 ρ, ↓[σ] → [τ1 ∩ τ2] ρ -> ↓[σ] → [τ2 ∩ τ1] ρ.
@@ -579,7 +579,7 @@ Module Types.
         - eassumption.
         - rewrite commutativity.
           reflexivity.
-      Qed.
+      Defined.
 
       Fact ArrowIdeal_merge:
         forall σ τ1 τ2 ρ1 ρ2, 
@@ -595,7 +595,7 @@ Module Types.
           + eassumption.
           + eassumption.
         - reflexivity.
-      Qed.
+      Defined.
 
       Fact ArrowIdeal_InterOmega_left:
         forall σ τ τ' ρ, Ω τ ->  ↓[σ] → [τ'] ρ -> ↓[σ] → [τ ∩ τ'] ρ.
@@ -610,7 +610,7 @@ Module Types.
             apply Ω_principal.
             assumption.
           + reflexivity.
-      Qed.
+      Defined.
 
       Fact ArrowIdeal_InterOmega_right:
         forall σ τ τ' ρ, Ω τ ->  ↓[σ] → [τ'] ρ -> ↓[σ] → [τ' ∩ τ] ρ.
@@ -618,7 +618,7 @@ Module Types.
         intros.
         apply ArrowIdeal_comm.
         apply ArrowIdeal_InterOmega_left; assumption.
-      Qed.
+      Defined.
 
 
       Fact ArrowIdeal_both:
@@ -694,7 +694,7 @@ Module Types.
               rewrite associativity.
               apply (transitivity InterMeetRight).
               assumption.
-      Qed.
+      Defined.
 
       Fact ArrowIdeal_lowerset:
         forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ τ, ↓[σ] → [τ] ρ2 -> ↓[σ] → [τ] ρ1.
@@ -720,7 +720,7 @@ Module Types.
           + exact (transitivity ρ1LEρ2_2 H3).
         - set (ωτ := Ω_upperset _ _ H3 OF_Omega).
           auto.
-      Qed.
+      Defined.
       
       Corollary ArrowIdeal_principalElement:
         forall ρ σ τ, ρ ≤ σ → τ -> ↓[σ] → [τ] ρ.
@@ -728,7 +728,7 @@ Module Types.
         intros ρ σ τ ρLEστ.
         exact (ArrowIdeal_lowerset _ _ ρLEστ _ _ 
           (AI_Arrow _ _ _ _ (reflexivity σ) (reflexivity τ))).
-      Qed.
+      Defined.
       
       Fact ArrowIdeal_directed:
         forall ρ1 ρ2 σ τ, ↓[σ] → [τ] ρ1 -> ↓[σ] → [τ] ρ2 ->
@@ -739,7 +739,7 @@ Module Types.
         - exact (AI_Arrow _ _ _ _ (reflexivity σ) (reflexivity τ)).
         - exact (ArrowIdeal_principal _ _ _ ρ1LEστ).
         - exact (ArrowIdeal_principal _ _ _ ρ2LEστ).
-      Qed.
+      Defined.
 
       Fact ArrowIdeal_prime:
         forall ρ1 ρ2 σ τ,
@@ -772,7 +772,7 @@ Module Types.
           destruct primality as [ ρ1LEστ | ρ2LEστ ].
           + left; auto.
           + right; auto.
-      Qed.
+      Defined.
       
       Reserved Notation "↓[ σ ] τ" (at level 89).
       Fixpoint Ideal σ: IntersectionType -> Prop :=
@@ -811,7 +811,7 @@ Module Types.
             assumption.
           + apply IHτ2.
             assumption.
-      Qed.
+      Defined.
 
       Lemma Ideal_Filter:
         forall σ τ, ↓[σ] τ -> ↑[τ] σ.
@@ -830,7 +830,7 @@ Module Types.
             assumption.
           + apply (IHσ2 ω).
             assumption.
-      Qed.
+      Defined.
 
       Lemma Ideal_principal:
         forall σ τ, ↓[σ] τ -> τ ≤ σ.
@@ -843,7 +843,7 @@ Module Types.
           apply (transitivity InterIdem).
           apply SubtyDistrib; auto.
         - intros; exact OmegaTop.
-      Qed.      
+      Defined.      
 
       Lemma Filter_principal:
         forall σ τ, ↑[σ] τ -> σ ≤ τ.
@@ -852,7 +852,7 @@ Module Types.
         apply Ideal_principal.
         apply Filter_Ideal.
         assumption.
-      Qed.
+      Defined.
 
       Lemma Ideal_lowerset:
         forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ, ↓[σ] ρ2 -> ↓[σ] ρ1.
@@ -865,7 +865,7 @@ Module Types.
           destruct ρ2LEσ1σ2 as [ ρ2LEσ1 ρ2LEσ2 ].
           split; auto.
         - trivial.
-      Qed.
+      Defined.
 
       Lemma Ideal_refl:
         forall σ, ↓[σ] σ.
@@ -877,7 +877,7 @@ Module Types.
           + apply (Ideal_lowerset _ σ1); auto with SubtypeHints.
           + apply (Ideal_lowerset _ σ2); auto with SubtypeHints.
         - exact (OF_Omega).
-      Qed.
+      Defined.
       
       Instance Ideal_Reflexive : Reflexive Ideal := Ideal_refl.
 
@@ -892,7 +892,7 @@ Module Types.
         - apply (Ideal_lowerset _ ρ2).
           + assumption.
           + reflexivity.
-      Qed.
+      Defined.
  
       Lemma Filter_refl:
         forall σ, ↑[σ] σ.
@@ -900,7 +900,7 @@ Module Types.
         intros.
         apply Ideal_Filter.
         reflexivity.
-      Qed.
+      Defined.
 
       Instance Filter_Reflexive : Reflexive Filter := Filter_refl.
 
@@ -913,7 +913,7 @@ Module Types.
             apply Ideal_principal;
             assumption.
         - reflexivity.
-      Qed.
+      Defined.
 
       Instance Ideal_Transitive : Transitive Ideal := Ideal_transitive.  
 
@@ -924,7 +924,7 @@ Module Types.
         apply Ideal_Filter.
         transitivity τ;
           apply Filter_Ideal; assumption.
-      Qed.
+      Defined.
 
       Instance Filter_Transitive : Transitive Filter := Filter_transitive.
 
@@ -942,7 +942,7 @@ Module Types.
             transitivity (σ1 ∩ σ2); auto with SubtypeHints.
         - intros.
           exact OF_Omega.
-      Qed.
+      Defined.
 
       Lemma Filter_principalElement:
         forall σ τ, σ ≤ τ -> ↑[σ] τ.
@@ -951,7 +951,7 @@ Module Types.
         apply Ideal_Filter.
         apply Ideal_principalElement.
         assumption.
-      Qed.
+      Defined.
 
       Require Import Logic.Decidable.
       Fact Ω_decidable: forall τ, decidable (Ω τ).
@@ -974,7 +974,7 @@ Module Types.
             solve [ left; apply OF_Inter; assumption
                   | right; intro ωτ1τ2; inversion ωτ1τ2; contradiction ].
         - left; exact OF_Omega.
-      Qed.
+      Defined.
 
       Fact ΩIdeal_decidable: forall σ, decidable (↓[ω] σ).
       Proof.
@@ -982,7 +982,7 @@ Module Types.
         left.
         simpl.
         exact OF_Omega.
-      Qed.
+      Defined.
       (*
       Fact Ideal_decidable_Filter_decidable:
         forall τ, (forall σ, decidable (↓[σ] τ)) -> forall σ, decidable (↑[σ] τ).
@@ -1008,7 +1008,7 @@ Module Types.
             try solve [ left; apply VI_InterLeft; assumption
                   | left; apply VI_InterRight; assumption
                   | right; unfold not; intro τLEσ; inversion τLEσ; contradiction ].
-      Qed.
+      Defined.
 
       Lemma VariableFilter_decidable: forall n τ, decidable (↑α[n] τ).
       Proof.
@@ -1026,349 +1026,460 @@ Module Types.
             solve [ left; split; assumption
                   | right; unfold not; intros nLEτ1τ2; inversion nLEτ1τ2; contradiction ].
         - simpl. exact (ΩIdeal_decidable (Var n)).
-      Qed.
+      Defined.
+      
+      Fixpoint ty_size σ : nat :=
+        match σ with
+          | Var _ => 1
+          | σ' → τ => ty_size σ' + ty_size τ
+          | ρ1 ∩ ρ2 => ty_size ρ1 + ty_size ρ2
+          | ω => 1
+        end.
 
-      Axiom bailOut: forall σ τ, decidable (↓[σ] τ).
-      Axiom bailOut2 : forall σ τ, decidable (↑[σ] τ).
+      Definition ty_pair_size στ : nat :=
+        ty_size (fst στ) + ty_size (snd στ).
 
-      Fixpoint Ideal_decidable σ τ: decidable (↓[σ] τ)
-      with Filter_decidable σ τ: decidable (↑[σ] τ).
+      Require Import Arith.Wf_nat.
+      Fact ty_pair_size_wf: 
+        well_founded (fun στ σ'τ' => ty_pair_size στ < ty_pair_size σ'τ').
       Proof.
-        - case σ.
-          + intro.
-            apply VariableIdeal_decidable.
-          + intros σ' τ'.
-            case (Ω_decidable τ').
-            * intro.
+        apply well_founded_ltof.
+      Defined.
+       
+      Require Import Arith_base.
+      Require Import NArith.
+      Require Import NZAddOrder.
+      Fact ty_size_positive:
+        forall σ, ty_size σ >= 1.
+      Proof.
+        induction σ;
+          simpl;
+          try solve [ auto ];
+          apply le_plus_trans;
+          assumption.
+      Defined.
+
+      Fact ty_pair_size_dec_any:
+        forall σ τ σ' τ',
+        (ty_size σ < ty_size σ' /\ ty_size τ <= ty_size τ') +
+        (ty_size τ < ty_size τ' /\ ty_size σ <= ty_size σ') ->
+        ty_pair_size (σ, τ) < ty_pair_size (σ', τ').
+      Proof.
+        intros σ τ σ' τ' lt_le_p.
+        destruct lt_le_p as [ [σLTσ' τLEτ'] | [τLTτ' σLEσ'] ].
+        - apply plus_lt_le_compat; assumption.
+        - apply plus_le_lt_compat; assumption.
+      Defined.
+
+      Fact ty_pair_size_dec_fst:
+        forall σ τ σ' τ',
+        (ty_size σ < ty_size σ' /\ ty_size τ <= ty_size τ') ->
+        ty_pair_size (σ, τ) < ty_pair_size (σ', τ').
+      Proof.
+        intros.
+        apply ty_pair_size_dec_any.
+        left.
+        assumption.
+      Defined.
+
+      Fact ty_pair_size_dec_snd:
+        forall σ τ σ' τ',
+        (ty_size τ < ty_size τ' /\ ty_size σ <= ty_size σ') ->
+        ty_pair_size (σ, τ) < ty_pair_size (σ', τ').
+      Proof.
+        intros.
+        apply ty_pair_size_dec_any.
+        right.
+        assumption.
+      Defined.
+
+      Fact ty_size_drop_tgt:
+        forall σ τ,
+        ty_size σ < ty_size (σ → τ).
+      Proof.
+        intros.
+        simpl.
+        rewrite <- plus_0_r at 1.
+        apply plus_le_lt_compat.
+        - reflexivity.
+        - apply ty_size_positive.
+      Defined.
+
+      Fact ty_size_drop_src:
+        forall σ τ,
+        ty_size τ < ty_size (σ → τ).
+      Proof.
+        intros.
+        simpl.
+        rewrite <- plus_0_l at 1.
+        apply plus_lt_le_compat.
+        - apply ty_size_positive.
+        - reflexivity.
+      Defined.
+
+      Fact ty_size_drop_left:
+        forall σ τ,
+        ty_size σ < ty_size (σ ∩ τ).
+      Proof.
+        intros.
+        simpl.
+        rewrite <- plus_0_r at 1.
+        apply plus_le_lt_compat.
+        - reflexivity.
+        - apply ty_size_positive.
+      Defined.
+
+      Fact ty_size_drop_right:
+        forall σ τ,
+        ty_size τ < ty_size (σ ∩ τ).
+      Proof.
+        intros.
+        simpl.
+        rewrite <- plus_0_l at 1.
+        apply plus_lt_le_compat.
+        - apply ty_size_positive.
+        - reflexivity.
+      Defined.
+
+      Fact ty_pair_size_comm:
+        forall σ τ,
+        ty_pair_size (σ, τ) = ty_pair_size (τ, σ).
+      Proof.
+        intros.
+        unfold ty_pair_size.
+        simpl.
+        rewrite plus_comm.
+        reflexivity.
+      Defined.
+     
+      
+      Fact ty_pair_size_dec_tgt:
+        forall σ τ σ' τ',
+        ty_pair_size (τ, τ') < ty_pair_size ((σ → τ), (σ' → τ')).
+      Proof.
+        intros.
+        apply ty_pair_size_dec_fst.
+        split.
+        - apply ty_size_drop_src.
+        - apply (transitivity (le_n_Sn _)).
+          apply ty_size_drop_src.
+      Defined.
+      
+      Fact ty_pair_size_dec_src:
+        forall σ τ σ' τ',
+        ty_pair_size (σ', σ) < ty_pair_size ((σ → τ), (σ' → τ')).
+      Proof.
+        intros.
+        rewrite ty_pair_size_comm.
+        apply ty_pair_size_dec_fst.
+        split.
+        - apply ty_size_drop_tgt.
+        - apply (transitivity (le_n_Sn _)).
+          apply ty_size_drop_tgt.
+      Defined.
+      
+
+      Fact Pick_Ideal σ ρ (decσ : forall σ', ty_pair_size (σ, σ') < ty_pair_size (σ, ρ) -> decidable (↑[σ] σ')):
+        exists τ, (↓[σ] → [τ] ρ) /\ (forall τ', ↓[σ] → [τ'] ρ -> τ ≤ τ') /\ ty_size τ <= ty_size ρ.
+      Proof.
+        induction ρ as [ | σ' _ τ' _ | | ].
+        - exists ω.
+          split; [|split].
+          + apply AI_Omega.
+            exact OF_Omega.
+          + intros τ' nLEτ'.
+            inversion nLEτ'.
+            apply Filter_principal.
+            assumption.
+          + reflexivity.
+        - case (decσ σ').
+          + apply ty_pair_size_dec_snd.
+            split.
+            * apply ty_size_drop_tgt.
+            * reflexivity.
+          + intro σLEσ'.
+            exists τ'.
+            split; [|split].
+            * apply AI_Arrow.
+              { apply Filter_principal; assumption. }
+              { reflexivity. }
+            * intros τ1 σ'τ'LEστ1.
+              inversion σ'τ'LEστ1.
+              { transitivity ω.
+                - exact OmegaTop.
+                - apply Filter_principal.
+                  assumption. }
+              { assumption. }
+            * apply (transitivity (le_n_Sn _)).
+              apply ty_size_drop_src.
+          + intro σNLEσ'.
+            exists ω.
+            split; [|split].
+            * apply AI_Omega.
+              exact OF_Omega.
+            * intros τ1 σ'τ'LEστ1.
+              inversion σ'τ'LEστ1.
+              { apply Filter_principal. assumption. }
+              { contradict σNLEσ'.
+                apply Filter_principalElement.
+                assumption. }
+            * apply ty_size_positive.
+        - assert (decσρ1 :forall σ' : IntersectionType,
+            ty_pair_size (σ, σ') < ty_pair_size (σ, ρ1) -> decidable (↑[σ]σ')).
+          { intros σ' leP.
+            apply decσ.
+            transitivity (ty_pair_size (σ, ρ1)).
+            - assumption.
+            - apply ty_pair_size_dec_snd.
+              split.
+              + apply ty_size_drop_left.
+              + reflexivity. }
+          destruct (IHρ1 decσρ1) as [ τ1 [ ρ1LEστ1 τ1_min ] ].
+          assert (decσρ2 :forall σ' : IntersectionType,
+            ty_pair_size (σ, σ') < ty_pair_size (σ, ρ2) -> decidable (↑[σ]σ')).
+          { intros σ' leP.
+            apply decσ.
+            transitivity (ty_pair_size (σ, ρ2)).
+            - assumption.
+            - apply ty_pair_size_dec_snd.
+              split.
+              + apply ty_size_drop_right.
+              + reflexivity. }
+          destruct (IHρ2 decσρ2) as [ τ2 [ ρ2LEστ2 τ2_min ] ].
+          exists (τ1 ∩ τ2).
+          split; [|split].
+          + apply (AI_Inter _ _ _ _ τ1 τ2).
+            * assumption.
+            * assumption. 
+            * reflexivity.
+          + intros τ' ρ1ρ2LEστ'.
+            inversion ρ1ρ2LEστ'.
+            * transitivity ω.
+              { exact OmegaTop. }
+              { apply Filter_principal.
+                assumption. }
+            * apply (transitivity InterMeetLeft).
+              apply τ1_min.
+              assumption.
+            * apply (transitivity InterMeetRight).
+              apply τ2_min.
+              assumption.
+            * transitivity (ρ0 ∩ ρ3).
+              { apply (SubtyDistrib).
+                - apply τ1_min.
+                  assumption.
+                - apply τ2_min.
+                  assumption. }
+              { assumption. }
+          + simpl.
+            apply plus_le_compat.
+            * exact (proj2 τ1_min).
+            * exact (proj2 τ2_min).            
+        - exists ω.
+          split; [|split].
+          + apply AI_Omega.
+            exact OF_Omega.
+          + intros τ' ωLEστ'.
+            inversion ωLEστ'.
+            apply Filter_principal.
+            assumption.
+          + reflexivity.
+      Defined.
+
+      Definition Ideal_decidable': 
+        forall στ
+          (Ideal_decidable'':
+            forall σ'τ',
+            (ty_pair_size σ'τ' < ty_pair_size στ) ->
+            decidable (↓[fst σ'τ'] (snd σ'τ'))), decidable (↓[fst στ] (snd στ)).
+      Proof.
+        intros [ σ τ Ideal_decidable''].
+        case σ as [ | σ' τ' | ρ1 ρ2 | ] eqn:σeq.
+        - apply VariableIdeal_decidable.
+        - case τ as [ | σ'' τ'' | ρ1 ρ2 | ].
+          + case (Ω_decidable τ').
+            * intro ωτ'.
               left.
               apply (AI_Omega).
               assumption.
-            * intro.
-              case τ;
-                try solve [
-                  intros;
-                  right;
-                  unfold not;
-                  intro τLEσ'τ';
-                  inversion τLEσ'τ';
-                  contradiction ].
-              { intros σ'' τ''.
-                set (σ'LEσ'' := Filter_decidable σ' σ'').
-                set (τ''LEτ' := Ideal_decidable τ' τ'').
-                case τ''LEτ'.
-                - case σ'LEσ''.
-                  + left.
-                    intros.
-                    apply AI_Arrow; apply Ideal_principal.
-                    * apply Filter_Ideal.
-                      assumption.
-                    * assumption.
-                  + intros.
-                    right.
-                    intro σ''τ''LEσ'τ'.
-                    inversion σ''τ''LEσ'τ' as [ * | * * pσ  | | | ].
-                    * contradiction.
-                    * set (pσ' := Ideal_Filter _ _ (Ideal_principalElement _ _ pσ)).
-                      contradiction.
+            * intros.
+              right.
+              unfold not.
+              intro nLEσ'τ'.
+              inversion nLEσ'τ'.
+              contradiction.
+          + case (Ideal_decidable'' (τ', τ'')).
+            * apply ty_pair_size_dec_tgt.
+            * intro τ''LEτ'.
+              case (Ideal_decidable'' (σ'', σ') (ty_pair_size_dec_src σ' τ' σ'' τ'')).
+              { intro σ'LEσ''.
+                left.
+                apply (AI_Arrow).
+                - apply (Filter_principal).
+                  apply (Ideal_Filter).
+                  assumption.
+                - apply (Ideal_principal).
+                  assumption. }
+              { intro σ'NLEσ''.
+                case (Ω_decidable τ').
+                - intro ωτ'.
+                  left.
+                  apply (AI_Omega).
+                  assumption.
                 - intros.
                   right.
-                  intros σ''τ''LEσ'τ'.
-                  inversion σ''τ''LEσ'τ' as [ * | * * pσ pτ | | | ].
-                  + contradiction. 
-                  + set (pτ' := Ideal_principalElement _ _ pτ).
-                    contradiction. }
-              {
-                    
-                    
-                apply AI_Arrow.
-          | xxx => bailOut xxx τ
-        end
-      with Filter_decidable σ τ: decidable (↑[σ] τ) :=
-        match σ return decidable (↑[σ] τ) with
-          | Var n => VariableFilter_decidable n τ
-          | Omega => Ω_decidable τ
-          (*| σ' → τ' =>*)
-          | xxx => bailOut2 xxx τ
-        end.
-
-      Proof.
-        intro ρ.
-        induction ρ.
-        Focus 2.
-
-
-
-        induction σ; intro τ;
-          induction τ;
-          try solve [ right; unfold not; intro τLEσ; inversion τLEσ ].
-        Focus 5.
-
-        - assert (varEq : {n = n0} + {~n = n0}).
-          + decide equality.
-          + inversion varEq as [ equal | notEqual ].
-            * rewrite equal.
-              left.
-              reflexivity.
-            * right. 
+                  unfold not.
+                  intro σ''τ''LEσ'τ'.
+                  inversion σ''τ''LEσ'τ'.
+                  + contradiction.
+                  + contradict σ'NLEσ''.
+                    apply Filter_Ideal.
+                    apply (Filter_principalElement).
+                    assumption. }
+            * intro τ''NLEτ'.
+              right.
               unfold not.
-              intro nLEn0.
-              inversion nLEn0.
+              intro σ''τ''LEσ'τ'.
+              inversion σ''τ''LEσ'τ'.
+              { contradict τ''NLEτ'.
+                apply (Ideal_principalElement).
+                transitivity ω.
+                - exact OmegaTop.
+                - apply (Filter_principal).
+                  assumption. }
+              { contradict τ''NLEτ'.
+                apply (Ideal_principalElement).
+                assumption. }
+          + case (Ω_decidable τ').
+            * left.
+              apply (AI_Omega).
+              assumption.
+            * assert (Pick_Ideal_Ideal_decidable : forall τ,
+                ty_pair_size (σ', τ) < ty_pair_size (σ', ρ1 ∩ ρ2) ->
+                decidable (↑[σ']τ)).
+              { intros τ ltP.
+                case σ' as [ | σ'' τ'' | ρ1' ρ2' | ]; 
+                  intros;
+                  try solve [ apply Ω_decidable
+                            | apply VariableFilter_decidable ].
+                - simpl.
+                  apply (Ideal_decidable'' (τ, σ'' → τ'')).
+                  rewrite (ty_pair_size_comm).
+                  apply (transitivity ltP).
+                  apply ty_pair_size_dec_fst.
+                  split.
+                  + apply ty_size_drop_tgt.
+                  + reflexivity.
+                - simpl.
+                  apply (Ideal_decidable'' (τ, ρ1' ∩ ρ2')).
+                  rewrite (ty_pair_size_comm).
+                  apply (transitivity ltP).
+                  apply ty_pair_size_dec_fst.
+                  split.
+                  + apply ty_size_drop_tgt.
+                  + reflexivity. }
+              case (Pick_Ideal σ' (ρ1 ∩ ρ2) (Pick_Ideal_Ideal_decidable)).
+              intros τ_min [ aiρ1 aiρ1ρ2_min ] ωNLEτ'.
+              case (Ideal_decidable'' (τ', τ_min)).
+              { apply ty_pair_size_dec_fst.
+                split.
+                + apply ty_size_drop_src.
+                + apply (proj2 aiρ1ρ2_min). }
+              { left.
+                apply (ArrowIdeal_weaken σ' τ_min).
+                + assumption.
+                + apply Ideal_principal.
+                  assumption. }
+              { intro τ_minNLEτ'.
+                right.
+                unfold not.
+                intro ρ1ρ2LEσ'τ'.
+                inversion ρ1ρ2LEσ'τ';
+                  try solve [ contradiction ];
+                  contradict τ_minNLEτ';
+                  apply Ideal_principalElement;
+                  apply aiρ1ρ2_min.
+                + apply AI_InterLeft.
+                  assumption.
+                + apply AI_InterRight.
+                  assumption.
+                + eapply AI_Inter; eassumption. }
+          + case (Ω_decidable τ').
+            * left.
+              apply AI_Omega.
+              assumption.
+            * right.
+              unfold not.
+              intro ωLEσ'τ'.
+              inversion ωLEσ'τ'.
               contradiction.
-        - destruct (Ω_decidable σ2).
-          + left.
-            apply AI_Omega.
-            assumption.
+        - case (Ideal_decidable'' (ρ1, τ)).
+          + apply ty_pair_size_dec_fst.
+            split.
+            * apply ty_size_drop_left.
+            * reflexivity. 
+          + simpl.
+            case (Ideal_decidable'' (ρ2, τ)).
+            { apply ty_pair_size_dec_fst.
+              split.
+              - apply ty_size_drop_right.
+              - reflexivity. }
+            { intros.
+              left.
+              split; assumption. }
+            { right.
+              unfold not.
+              intros [ τLEρ1 τLEρ2 ].
+              contradiction. }
           + right.
             unfold not.
-            intro τLEσ.
-            inversion τLEσ.
+            intros [ τLEρ1 τLEρ2 ].
             contradiction.
-        - inversion IHσ1; inversion IHσ2;
-              solve [ left; split; assumption
-                    | right; unfold not; intro τLEσ; inversion τLEσ; contradiction ].
-        - left; exact OF_Omega. 
-        - destruct (IHτ2 σ2).
-          + destruct (IHτ1 σ1).
-            * left; apply AI_Arrow; apply Ideal_principal.
-              { 
-              eapply Ideal_principal.
-          + right.
-            unfold not.
-            intro τLEσ; inversion τLEσ.
-            
+        - left.
+          simpl.
+          exact OF_Omega.
+      Defined.
 
-
-              try solve [ left; apply VI_InterLeft; assumption
-                    | left; apply VI_InterRight; assumption
-                    | right; unfold not; intro le; inversion le; contradiction ].
-        - induction τ.
-          +           + 
-          + right.
-            unfold not.
-            intro.
-            inversion H.
-            inversion H0.
-
-            
-            
-        unfold decidable.
-
-      Lemma IdealFilter_dual:
-        forall σ τ, ↓[σ] τ -> ↑[τ] σ.
+      Lemma Ideal_decidable:
+        forall σ τ, decidable (↓[σ] τ).
       Proof.
+        intros σ τ.
+        exact (Fix ty_pair_size_wf _ Ideal_decidable' (σ, τ)).
+      Defined.
 
-      
-         
-
-      (*
-      Fixpoint Filter σ: IntersectionType -> Prop :=
-        match σ with
-          | ω => Ω
-          | Var n => VariableFilter n 
-          | σ → τ => ArrowFilter σ τ
-          | σ ∩ τ => fun ρ => Filter σ ρ /\ Filter τ ρ
-        end.
-      Notation "↑[ σ ] τ" := (Filter σ τ) (at level 89).
-
-      Fixpoint Ideal σ: IntersectionType -> Prop :=
-        match σ with
-          | ω => fun _ => True
-          | Var n => VariableIdeal n
-          | σ → τ => ArrowIdeal σ τ
-          | σ ∩ τ => fun ρ => Ideal σ ρ /\ Ideal τ ρ
-        end.
-      Notation "↓[ σ ] τ" := (Ideal σ τ) (at level 89).
-
-      Lemma Filter_principal:
-        forall σ τ, ↑[σ] τ -> σ ≤ τ.
-      Proof.
-        induction σ.
-        - exact (VariableFilter_principal _).
-        - exact (ArrowFilter_principal _ _).
-        - intros τ τGEσ1σ2.
-          destruct τGEσ1σ2 as [τGEσ1 τGEσ2].
-          apply (transitivity InterMeetLeft).
-          auto.
-        - exact (Ω_principal).
-      Qed.
-
-      Lemma Ideal_principal:
-        forall σ τ, ↓[σ] τ -> τ ≤ σ.
-      Proof.
-        induction σ.
-        - exact (VariableIdeal_principal _).
-        - exact (ArrowIdeal_principal _ _).
-        - intros τ τLEσ1σ2.
-          destruct τLEσ1σ2 as [ τLEσ1 τLEσ2 ].
-          apply (transitivity InterIdem).
-          apply SubtyDistrib; auto.
-        - intros; exact OmegaTop.
-      Qed.
-
-      Lemma Filter_upperset:
-        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ, ↑[σ] ρ1 -> ↑[σ] ρ2.
-      Proof.
-        intros ρ1 ρ2 ρ1LEρ2 σ.
-        induction σ.
-        - exact (VariableFilter_upperset _ _ ρ1LEρ2 _).
-        - exact (ArrowFilter_upperset _ _ ρ1LEρ2 _ _).
-        - intro ρ1LEσ1σ2.
-          destruct ρ1LEσ1σ2 as [ ρ1LEσ1 ρ1LEσ2 ].
-          simpl. auto.
-        - exact (Ω_upperset _ _ ρ1LEρ2).
-      Qed.
-
-      Lemma Ideal_lowerset:
-        forall ρ1 ρ2, ρ1 ≤ ρ2 -> forall σ, ↓[σ] ρ2 -> ↓[σ] ρ1.
-      Proof.
-        intros ρ1 ρ2 ρ1LEρ2 σ.
-        induction σ.
-        - exact (VariableIdeal_lowerset _ _ ρ1LEρ2 _).
-        - exact (ArrowIdeal_lowerset _ _ ρ1LEρ2 _ _).
-        - intro ρ2LEσ1σ2.
-          destruct ρ2LEσ1σ2 as [ ρ2LEσ1 ρ2LEσ2 ].
-          split; auto.
-        - trivial.
-      Qed.
-
-      Lemma Ideal_principalElement:
-        forall σ τ, τ ≤ σ -> ↓[σ] τ.
+      Lemma Filter_decidable:
+        forall σ τ, decidable (↑[σ] τ).
       Proof.
         intro σ.
-        induction σ.
-        - intro.
-          exact (VariableIdeal_principalElement _ _).
-        - intro.
-          exact (ArrowIdeal_principalElement _ _ _).
-        - intros τ τLEσ1σ2.
-          split; [ apply IHσ1 | apply IHσ2 ];
-            transitivity (σ1 ∩ σ2); auto.
-        - simpl. auto.
-      Qed.
+        case σ;
+         solve [ intros; apply Ideal_decidable
+               | intros; apply Ω_decidable ].
+      Defined.
 
-      Lemma Ideal_prime:
-        forall ρ1 ρ2 σ,
-          ↓[σ] ρ1 ∩ ρ2 ->
-          (((↓[σ] ρ1) \/ (ρ2 ≤ ρ1)) \/
-           ((↓[σ] ρ2) \/ (ρ1 ≤ ρ2)) <->
-           (↓[σ] ρ1) \/ (↓[σ] ρ2)).
+      Corollary Subtype_decidable:
+        forall σ τ, decidable (σ ≤ τ).
       Proof.
-        intros ρ1 ρ2 σ.
-        induction σ; 
-          intro ρ1ρ2LEσ;
-          split; 
-          try solve [ intro primality; destruct primality; auto ].
-        - intro.
-          apply (VariableIdeal_prime _ _);
-          trivial.
-        - intro.
-          apply (ArrowIdeal_prime _ _ _ _);
-          trivial.
-        - intro primality.
-          destruct primality as [ [ ρ1LEσ1σ2 | ρ2LEρ1 ] | [ ρ2LEσ1σ2 | ρ1LEρ2 ] ]; 
-            try solve [ auto ];
-            destruct ρ1ρ2LEσ as [ ρ1ρ2LEσ1 ρ1ρ2LEσ2 ].
-          + assert (ρ2LEρ1ρ2 : ρ2 ≤ ρ1 ∩ ρ2).
-            * apply (transitivity InterIdem).
-              apply SubtyDistrib. 
-              { trivial. }
-              { reflexivity. }
-            * right.
-              apply (Ideal_lowerset _ _ ρ2LEρ1ρ2).
-              simpl.
-              auto.
-          + assert (ρ1LEρ1ρ2 : ρ1 ≤ ρ1 ∩ ρ2).
-            * apply (transitivity InterIdem).
-              apply SubtyDistrib. 
-              { reflexivity. }
-              { trivial. }
-            * left.
-              apply (Ideal_lowerset _ _ ρ1LEρ1ρ2).
-              simpl.
-              auto.
-      Qed.
+        intros.
+        case (Ideal_decidable τ σ).
+        - intros.
+          left.
+          apply Ideal_principal.
+          assumption.
+        - intros σLEτ.
+          right.
+          unfold not.
+          intros.
+          contradict σLEτ.
+          apply Ideal_principalElement.
+          assumption.
+      Defined.
+    End BetaLemmas.
 
-
-
-
-        
-      (*Lemma Ideal2Filter:
-        forall σ τ, ↓[σ] τ -> ↑[τ] σ.
-      Proof.
-        intros σ τ τLEσ.
-        set (τLEσ' := Ideal_principal _ _ τLEσ).*)
-
-      Lemma Filter_principalElement:
-        forall σ τ, σ ≤ τ -> ↑[σ] τ.
-      Proof.
-        intro σ.
-        induction σ; intro τ.
-        - exact (VariableFilter_principalElement _ _).
-        - exact (ArrowFilter_principalElement _ _ _).
-        - intro σ1σ2LEτ.
-          split.
-
-        
-          induction τ; intro σ1σ2LEτ.
-          + set (σ1σ2LEn := VariableIdeal_lowerset _ _ σ1σ2LEτ _ (VI_Var _)).
-            inversion σ1σ2LEn as [ | * * σ1LEn | * * σ2LEn ].
-            * left.
-              set (σ1LEτ := VariableIdeal_principal _ _ σ1LEn).
-              auto.
-            * right.
-              set (σ2LEτ := VariableIdeal_principal _ _ σ2LEn).
-              auto.
-          + set (σ1σ2LEστ := ArrowIdeal_lowerset _ _ σ1σ2LEτ _ _
-                  (AI_Arrow _ _ _ _ (reflexivity τ1) (reflexivity τ2))).
-            inversion σ1σ2LEστ as [ * ωτ2 | | * * τ1τ2LEσ1 | | ].
-            * left.
-              set (τ1τ2ω := Arrow_Tgt_Omega_eq (σ := τ1) (Ω_principal _ ωτ2)).
-              apply IHσ1.
-              apply (transitivity OmegaTop).
-              exact τ1τ2ω.
-            * left.
-              
-
-          induction τ
-          induction σ1σ2LEτ.
-          + left.
-        - exact (Ω_principalElement _).
-
-
-      Print ArrowLowerset_both.
-
-      Definition ArrowSelection (ρ σ τ: IntersectionType): Prop :=
-        let fix sel (ρ : IntersectionType) 
-                (contAdd : Prop -> IntersectionType -> Prop)
-                (contSkip : Prop): Prop :=
-          match ρ with
-            | Arr σ' τ' => contAdd (σ ≤ σ') τ'
-            | Inter σ' τ' => 
-                sel τ' (fun σsel τsel => 
-                  sel σ' (fun σsel' τsel' => 
-                      contAdd (σsel' /\ σsel) (τsel' ∩ τsel))
-                    (contAdd σsel τsel))
-                  (sel σ' contAdd contSkip)
-            | _ => contSkip
-            end in
-        sel ρ (fun σsel τsel => σsel /\ (τsel ≤ τ)) (False).
-      
-      Definition Beta_Arrows:
-        forall ρ σ τ, ρ ≤ σ → τ -> ArrowSelection ρ σ τ.
-      Proof.
-        induction ρ.
-        Focus 3.
-        - intros σ τ ρLEστ.
-          inversion ρLEστ.
-          rewrite <- H0 in H.
-          inversion H; inversion H2;
-            try solve [ rewrite <- H4 in H0 || rewrite <- H6 in H0 || rewrite H2 in H0; discriminate H0 ].
-          + 
-           
-        induction ρLEστ.
-        - 
-
-
+    Definition α := (Var 1).
+    Definition β := (Var 2).
+    Definition γ := (Var 3).
+    Definition δ := (Var 4).
+    Eval compute in Subtype_decidable (((α → β) → δ) ∩ ((α → γ) → δ)) ((α → δ) → δ).
   End SubtypeRelation.
 
 
