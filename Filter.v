@@ -3072,6 +3072,34 @@ Module Types (VAlpha : VariableAlphabet).
   End FCL.
 
 End Types.
+
+Module HSTy.
+  Extraction Language Haskell.
+  Module MachineIntVar <: VariableAlphabet.
+    Axiom ð : Set.
+    Axiom ð_eq_dec: forall α β : ð, { α = β } + { ~ (α = β) }.
+
+    Extract Constant ð => "GHC.Base.Int".
+    Extract Constant ð_eq_dec => "(\ x y -> if x GHC.Base.== y then Specif.Coq_left else Specif.Coq_right)".
+  End MachineIntVar.
+
+  Module T := MachineIntVar <+ Types.
+  Include T.
+End HSTy.
+
+Module OcamlTy.
+  Extraction Language Ocaml.
+  Module MachineIntVar <: VariableAlphabet.
+    Axiom ð : Set.
+    Axiom ð_eq_dec: forall α β : ð, { α = β } + { ~ (α = β) }.
+    
+    Extract Constant ð => "int".
+    Extract Constant ð_eq_dec => "(fun x y -> if x = y then Coq_left else Coq_right)".
+  End MachineIntVar.
+
+  Module T := MachineIntVar <+ Types.
+End OcamlTy.
+
 Module CoqExample.
   Module NatVar <: VariableAlphabet.
     Definition ð := nat.
