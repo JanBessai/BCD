@@ -3072,3 +3072,22 @@ Module Types (VAlpha : VariableAlphabet).
   End FCL.
 
 End Types.
+Module CoqExample.
+  Module NatVar <: VariableAlphabet.
+    Definition ð := nat.
+    Require Import Coq.Arith.Peano_dec.
+    Definition ð_eq_dec := eq_nat_dec.
+  End NatVar.
+  Module NatVarTypes := NatVar <+ Types.
+  Import NatVarTypes.
+  
+  Definition α := (Var 1).
+  Definition β := (Var 2).
+  Definition γ := (Var 3).
+  Definition δ := (Var 4).
+  Definition ε := (Var 5).
+  Definition ζ := (Var 6).
+  
+  Import NatVarTypes.SubtypeRelation.
+  Eval hnf in Subtype_decidable (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ)) (((α → β → ε) → δ) ∩ (ε → ζ)).
+End CoqExample.
