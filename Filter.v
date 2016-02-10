@@ -1,6 +1,21 @@
 
-Module Types.
-  
+Require Import Coq.Structures.Equalities.
+Module Type SetTyp <: Typ.
+  Parameter t : Set.
+End SetTyp.
+Module Type VariableAlphabet <: UsualDecidableType := 
+  SetTyp <+ HasUsualEq <+ UsualIsEq <+ HasEqDec.
+
+Require Import Coq.Structures.Orders.
+Module Type OrderedVariableAlphabet <: UsualOrderedType :=
+  VariableAlphabet <+ HasLt <+ IsStrOrder <+ HasCompare.
+
+ 
+Module Types (VAlpha : VariableAlphabet).
+  Definition ð := VAlpha.t.
+  Definition ð_eq_dec: forall α β : ð, { α = β } + { α <> β } := VAlpha.eq_dec.
+
+  Local Hint Resolve ð_eq_dec.
 (*
   Class Variables v ty :=
   { variable : v -> ty }.
@@ -96,14 +111,21 @@ Module Types.
     inter (inter (arrow (arrow (variable 3) omega) (variable 4)) (arrow (variable 1) (variable 2))) omega.
 
   Eval compute in simplify someType.
-*)
+*) 
 
   Inductive IntersectionType : Set :=
-  | Var : nat -> IntersectionType
+  | Var : ð -> IntersectionType
   | Arr : IntersectionType -> IntersectionType -> IntersectionType
   | Inter : IntersectionType -> IntersectionType -> IntersectionType
   | Omega : IntersectionType.
-  Scheme Equality for IntersectionType.
+
+  Lemma IntersectionType_eq_dec: forall σ τ : IntersectionType, { σ = τ } + { σ <> τ }.
+  Proof.
+    intros σ τ.
+    compare σ τ; auto.
+  Defined.
+
+  Hint Resolve IntersectionType_eq_dec.
 
   Infix "→" := (Arr) (at level 88, right associativity).
   Notation "(→)" := Arr (only parsing).
@@ -550,18 +572,18 @@ Module Types.
         - exact Arrow_Tgt_Omega_eq.
       Defined.
      
-      Reserved Notation "↓α[ n ] σ" (at level 89).
-      Inductive VariableIdeal (n : nat): IntersectionType -> Prop :=
-        | VI_Var : ↓α[n] (Var n)
-        | VI_InterLeft : forall σ τ, ↓α[n] σ -> ↓α[n] σ ∩ τ
-        | VI_InterRight : forall σ τ, ↓α[n] τ -> ↓α[n] σ ∩ τ
-      where "↓α[ n ] σ" := (VariableIdeal n σ).
+      Reserved Notation "↓α[ α ] σ" (at level 89).
+      Inductive VariableIdeal (α : ð): IntersectionType -> Prop :=
+        | VI_Var : ↓α[α] (Var α)
+        | VI_InterLeft : forall σ τ, ↓α[α] σ -> ↓α[α] σ ∩ τ
+        | VI_InterRight : forall σ τ, ↓α[α] τ -> ↓α[α] σ ∩ τ
+      where "↓α[ α ] σ" := (VariableIdeal α σ).
 
       Fact VariableIdeal_principal:
-        forall n σ, ↓α[n] σ -> σ ≤ (Var n).
+        forall α σ, ↓α[α] σ -> σ ≤ (Var α).
       Proof.
-        intros n σ σLEn.
-        induction σLEn.
+        intros α σ σLEα.
+        induction σLEα.
         - reflexivity.
         - transitivity σ.
           + exact InterMeetLeft.
@@ -572,11 +594,11 @@ Module Types.
       Defined.
       
       Fact VariableIdeal_lowerset:
-        forall σ τ, σ ≤ τ -> forall n, ↓α[n] τ -> ↓α[n] σ.
+        forall σ τ, σ ≤ τ -> forall α, ↓α[α] τ -> ↓α[α] σ.
       Proof.
         intros σ τ σLEτ.
         induction σLEτ;
-          try solve [ intros n H; inversion H ].
+          try solve [ intros α H; inversion H ].
         - intro; apply VI_InterLeft.
         - intro; apply VI_InterRight.
         - intros * H; inversion H; assumption.
@@ -596,27 +618,27 @@ Module Types.
       Defined.
       
       Corollary VariableIdeal_principalElement:
-        forall σ n, σ ≤ (Var n) -> ↓α[n] σ.
+        forall σ α, σ ≤ (Var α) -> ↓α[α] σ.
       Proof.
-        intros σ n σLEn.
-        exact (VariableIdeal_lowerset _ _ σLEn _ (VI_Var n)).
+        intros σ α σLEα.
+        exact (VariableIdeal_lowerset _ _ σLEα _ (VI_Var α)).
       Defined.
       
       Fact VariableIdeal_directed:
-        forall n σ τ, ↓α[n] σ -> ↓α[n] τ -> (↓α[n] (Var n)) /\ (σ ≤ (Var n)) /\ (τ ≤ (Var n)).
+        forall α σ τ, ↓α[α] σ -> ↓α[α] τ -> (↓α[α] (Var α)) /\ (σ ≤ (Var α)) /\ (τ ≤ (Var α)).
       Proof.
-        intros n σ τ σLEn τLEn.
+        intros α σ τ σLEα τLEα.
         split; [|split].
-        - exact (VI_Var n).
-        - exact (VariableIdeal_principal _ _ σLEn).
-        - exact (VariableIdeal_principal _ _ τLEn).
+        - exact (VI_Var α).
+        - exact (VariableIdeal_principal _ _ σLEα).
+        - exact (VariableIdeal_principal _ _ τLEα).
       Defined.
 
       Fact VariableIdeal_prime:
-        forall σ τ n, ↓α[n] σ ∩ τ -> (↓α[n] σ) \/ (↓α[n] τ).
+        forall σ τ α, ↓α[α] σ ∩ τ -> (↓α[α] σ) \/ (↓α[α] τ).
       Proof.
-        intros σ τ n στLEn.
-        inversion στLEn as [ | * * σLEn | * * τLEn ]; auto.
+        intros σ τ α στLEα.
+        inversion στLEα as [ | * * σLEα | * * τLEα ]; auto.
       Defined.
       
       Reserved Notation "↓[ σ ] → [ τ ] ρ" (at level 89).
@@ -876,7 +898,7 @@ Module Types.
       Fixpoint Ideal σ: IntersectionType -> Prop :=
         match σ with
           | ω => fun _ => Ω ω
-          | Var n => fun τ => ↓α[n] τ
+          | Var α => fun τ => ↓α[α] τ
           | σ' → τ' => fun τ => ↓[σ'] → [τ'] τ
           | σ' ∩ τ' => fun τ => (↓[σ'] τ) /\ (↓[τ'] τ)
         end
@@ -1082,38 +1104,36 @@ Module Types.
         exact OF_Omega.
       Defined.
 
-      Lemma VariableIdeal_decidable: forall n τ, { ↓α[n] τ } + { ~(↓α[n] τ) }.
+      Lemma VariableIdeal_decidable: forall α τ, { ↓α[α] τ } + { ~(↓α[α] τ) }.
       Proof.
-        intros n τ.
-        induction τ;
+        intros α τ.
+        induction τ as [ β | σ IHσ τ IHτ | ρ1 IHρ1 ρ2 IHρ2 | ];
           try solve [ right; intro τLEσ; inversion τLEσ ].
-        - assert (varEq : {n = n0} + {~n = n0}).
-          * decide equality.
-          * inversion varEq as [ equal | notEqual ].
-            { rewrite equal. left. fold (Ideal (Var n0) (Var n0)). reflexivity. }
-            { right. unfold not. intro n0LEn. inversion n0LEn. contradiction. }
-        - inversion IHτ1; inversion IHτ2;
+        - set (varEq := ð_eq_dec α β).
+          inversion varEq as [ equal | notEqual ]. 
+            { rewrite equal. left. fold (Ideal (Var β) (Var β)). reflexivity. }
+            { right. unfold not. intro αLEβ. inversion αLEβ. contradiction. }
+        - inversion IHρ1; inversion IHρ2;
             try solve [ left; apply VI_InterLeft; assumption
                   | left; apply VI_InterRight; assumption
                   | right; unfold not; intro τLEσ; inversion τLEσ; contradiction ].
       Defined.
 
-      Lemma VariableFilter_decidable: forall n τ, { ↑α[n] τ } + { ~(↑α[n] τ) }.
+      Lemma VariableFilter_decidable: forall α τ, { ↑α[α] τ } + { ~(↑α[α] τ) }.
       Proof.
-        intros n τ.
-        induction τ.
-        - assert (varEq : {n0 = n} + {~n0 = n}).
-          * decide equality.
-          * inversion varEq as [ equal | notEqual ].
-            { rewrite equal. left. fold (Ideal (Var n0) (Var n0)). reflexivity. }
-            { right. unfold not. intro nLEn0. inversion nLEn0. contradiction. }
-        - destruct (Ω_decidable τ2).
+        intros α τ.
+        induction τ as [ β | σ IHσ τ IH τ | ρ1 IHρ1 ρ2 IHρ2 | ].
+        - set (varEq := ð_eq_dec β α).
+          inversion varEq as [ equal | notEqual ].
+            { rewrite equal. left. fold (Ideal (Var β) (Var β)). reflexivity. }
+            { right. unfold not. intro αLEβ. inversion αLEβ. contradiction. }
+        - destruct (Ω_decidable τ).
           + left. simpl. apply AI_Omega. assumption.
-          + right. unfold not. intro nLEτ1τ2. inversion nLEτ1τ2. contradiction.
-        - inversion IHτ1; inversion IHτ2;
+          + right. unfold not. intro αLEστ. inversion αLEστ. contradiction.
+        - inversion IHρ1; inversion IHρ2;
             solve [ left; split; assumption
-                  | right; unfold not; intros nLEτ1τ2; inversion nLEτ1τ2; contradiction ].
-        - simpl. exact (ΩIdeal_decidable (Var n)).
+                  | right; unfold not; intros αLEρ1ρ2; inversion αLEρ1ρ2; contradiction ].
+        - simpl. exact (ΩIdeal_decidable (Var α)).
       Defined.
       
       Fixpoint ty_size σ : nat :=
@@ -1275,8 +1295,8 @@ Module Types.
           split; [|split].
           + apply AI_Omega.
             exact OF_Omega.
-          + intros τ' nLEτ'.
-            inversion nLEτ'.
+          + intros τ' αLEτ'.
+            inversion αLEτ'.
             apply Filter_principal.
             assumption.
           + reflexivity.
@@ -1569,10 +1589,10 @@ Module Types.
         | tgt_InterLeft : forall ρ1 ρ2 τ, tgt ρ1 τ -> tgt (ρ1 ∩ ρ2) τ
         | tgt_InterRight : forall ρ1 ρ2 τ, tgt ρ2 τ -> tgt (ρ1 ∩ ρ2) τ.
 
-      Fact tgt_decidable: forall σ τ, decidable (tgt σ τ).
+      Fact tgt_decidable: forall σ τ, {tgt σ τ} + {~(tgt σ τ)}.
       Proof.
         intros σ τ.
-        compare σ τ; [ | | decide equality].
+        compare σ τ.
         - intro σEqτ.
           left.
           rewrite σEqτ.
@@ -1586,7 +1606,7 @@ Module Types.
             contradict σNeqτ.
             apply f_equal.
             assumption.
-          + compare τ' τ; [ | | decide equality].
+          + compare τ' τ.
             * intro τ'Eqτ.
               left.
               apply tgt_Arr.
@@ -1605,7 +1625,7 @@ Module Types.
                   assumption.
                 + apply ninTgt.
                   assumption. }
-          + compare ρ1 τ; [ | | decide equality].
+          + compare ρ1 τ.
             * intro ρ1Eqτ.
               rewrite ρ1Eqτ.
               left.
@@ -1617,7 +1637,7 @@ Module Types.
                 apply tgt_InterLeft.
                 assumption. }
               { intro ninTgtρ1.
-                compare ρ2 τ; [ | | decide equality].
+                compare ρ2 τ.
                 - intro ρ2Eqτ.
                   rewrite ρ2Eqτ.
                   left.
@@ -1645,7 +1665,7 @@ Module Types.
       
 
       Inductive Path : IntersectionType -> Prop :=
-        | Path_Var : forall n, Path (Var n)
+        | Path_Var : forall α, Path (Var α)
         | Path_Arr : forall σ τ, Path τ -> Path (σ → τ).
 
       Inductive Organized : IntersectionType -> Prop :=
@@ -1754,9 +1774,9 @@ Module Types.
         forall τ, (τ ~= ω) \/ (exists τ', Organized τ' /\ (τ ~= τ')).
       Proof.
         intros τ.
-        induction τ as [ n | σ IHσ τ IHτ | ρ1 IHρ1 ρ2 IHρ2 | ].
+        induction τ as [ α | σ IHσ τ IHτ | ρ1 IHρ1 ρ2 IHρ2 | ].
         - right.
-          exists (Var n).
+          exists (Var α).
           split.
           + apply Organized_Path.
             apply Path_Var.
@@ -2068,19 +2088,13 @@ Module Types.
 
     End BetaLemmas.
 
-    Definition α := (Var 1).
-    Definition β := (Var 2).
-    Definition γ := (Var 3).
-    Definition δ := (Var 4).
-    Definition ε := (Var 5).
-    Definition ζ := (Var 6).
-    Eval hnf in Subtype_decidable (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ)) (((α → β → ε) → δ) ∩ (ε → ζ)).
+   
   End SubtypeRelation.
 
   Module FCL.
     
     (*Variable Base : Set.*)
-    Definition Base := nat.
+    Definition Base : Set := nat.
     Definition Ctxt : Type := Base -> IntersectionType.
    
     Inductive Term: Set :=
