@@ -12,10 +12,10 @@ Module Type OrderedVariableAlphabet <: UsualOrderedType :=
 
  
 Module Types (VAlpha : VariableAlphabet).
-  Definition ð := VAlpha.t.
-  Definition ð_eq_dec: forall α β : ð, { α = β } + { α <> β } := VAlpha.eq_dec.
+  Definition 𝕍 := VAlpha.t.
+  Definition 𝕍_eq_dec: forall α β : 𝕍, { α = β } + { α <> β } := VAlpha.eq_dec.
 
-  Local Hint Resolve ð_eq_dec.
+  Local Hint Resolve 𝕍_eq_dec.
 (*
   Class Variables v ty :=
   { variable : v -> ty }.
@@ -114,7 +114,7 @@ Module Types (VAlpha : VariableAlphabet).
 *) 
 
   Inductive IntersectionType : Set :=
-  | Var : ð -> IntersectionType
+  | Var : 𝕍 -> IntersectionType
   | Arr : IntersectionType -> IntersectionType -> IntersectionType
   | Inter : IntersectionType -> IntersectionType -> IntersectionType
   | Omega : IntersectionType.
@@ -573,7 +573,7 @@ Module Types (VAlpha : VariableAlphabet).
       Defined.
      
       Reserved Notation "↓α[ α ] σ" (at level 89).
-      Inductive VariableIdeal (α : ð): IntersectionType -> Prop :=
+      Inductive VariableIdeal (α : 𝕍): IntersectionType -> Prop :=
         | VI_Var : ↓α[α] (Var α)
         | VI_InterLeft : forall σ τ, ↓α[α] σ -> ↓α[α] σ ∩ τ
         | VI_InterRight : forall σ τ, ↓α[α] τ -> ↓α[α] σ ∩ τ
@@ -1109,7 +1109,7 @@ Module Types (VAlpha : VariableAlphabet).
         intros α τ.
         induction τ as [ β | σ IHσ τ IHτ | ρ1 IHρ1 ρ2 IHρ2 | ];
           try solve [ right; intro τLEσ; inversion τLEσ ].
-        - set (varEq := ð_eq_dec α β).
+        - set (varEq := 𝕍_eq_dec α β).
           inversion varEq as [ equal | notEqual ]. 
             { rewrite equal. left. fold (Ideal (Var β) (Var β)). reflexivity. }
             { right. unfold not. intro αLEβ. inversion αLEβ. contradiction. }
@@ -1123,7 +1123,7 @@ Module Types (VAlpha : VariableAlphabet).
       Proof.
         intros α τ.
         induction τ as [ β | σ IHσ τ IH τ | ρ1 IHρ1 ρ2 IHρ2 | ].
-        - set (varEq := ð_eq_dec β α).
+        - set (varEq := 𝕍_eq_dec β α).
           inversion varEq as [ equal | notEqual ].
             { rewrite equal. left. fold (Ideal (Var β) (Var β)). reflexivity. }
             { right. unfold not. intro αLEβ. inversion αLEβ. contradiction. }
@@ -3076,11 +3076,13 @@ End Types.
 Module HSTy.
   Extraction Language Haskell.
   Module MachineIntVar <: VariableAlphabet.
-    Axiom ð : Set.
-    Axiom ð_eq_dec: forall α β : ð, { α = β } + { ~ (α = β) }.
+    Axiom t : Set.
+    Axiom eq_dec: forall α β : t, { α = β } + { ~ (α = β) }.
 
-    Extract Constant ð => "GHC.Base.Int".
-    Extract Constant ð_eq_dec => "(\ x y -> if x GHC.Base.== y then Specif.Coq_left else Specif.Coq_right)".
+    Include HasUsualEq.
+    Include UsualIsEq.
+    Extract Constant t => "GHC.Base.Int".
+    Extract Constant eq_dec => "(\ x y -> if x GHC.Base.== y then Specif.Coq_left else Specif.Coq_right)".
   End MachineIntVar.
 
   Module T := MachineIntVar <+ Types.
@@ -3090,11 +3092,13 @@ End HSTy.
 Module OcamlTy.
   Extraction Language Ocaml.
   Module MachineIntVar <: VariableAlphabet.
-    Axiom ð : Set.
-    Axiom ð_eq_dec: forall α β : ð, { α = β } + { ~ (α = β) }.
-    
-    Extract Constant ð => "int".
-    Extract Constant ð_eq_dec => "(fun x y -> if x = y then Coq_left else Coq_right)".
+    Axiom t : Set.
+    Axiom eq_dec: forall α β : t, { α = β } + { ~ (α = β) }.
+    Include HasUsualEq.
+    Include UsualIsEq.
+
+    Extract Constant t => "int".
+    Extract Constant eq_dec => "(fun x y -> if x = y then Coq_left else Coq_right)".
   End MachineIntVar.
 
   Module T := MachineIntVar <+ Types.
@@ -3102,9 +3106,11 @@ End OcamlTy.
 
 Module CoqExample.
   Module NatVar <: VariableAlphabet.
-    Definition ð := nat.
+    Definition t := nat.
     Require Import Coq.Arith.Peano_dec.
-    Definition ð_eq_dec := eq_nat_dec.
+    Definition eq_dec := eq_nat_dec.
+    Include HasUsualEq.
+    Include UsualIsEq.
   End NatVar.
   Module NatVarTypes := NatVar <+ Types.
   Import NatVarTypes.
