@@ -117,7 +117,7 @@ Module Types (VAlpha : VariableAlphabet).
         | ST σ τ p' =>
           ((fix subtypes_closure_ind (σ τ : IntersectionType) (p : σ ≤* τ) {struct p}: P σ τ := 
             match p in (clos_refl_trans _ _ _ τ)return P σ τ with
-            | rt_step τ p' =>
+            | rt_step _ _ _ τ p' =>
                 ((fix subtypes_rules_ind (σ τ : IntersectionType) (p : σ ≤[Subtypes] τ) {struct p}: P σ τ :=
                   match p in σ ≤[_] τ return P σ τ with
                   | R_InterMeetLeft σ τ => InterMeetLeft_case σ τ
@@ -136,8 +136,8 @@ Module Types (VAlpha : VariableAlphabet).
                   | R_Omega_Arrow =>
                       OmegaArrow_case
                   end) σ τ p')
-            | rt_refl => Refl_case σ
-            | rt_trans τ ρ p1 p2 => 
+            | rt_refl _ _ _ => Refl_case σ
+            | rt_trans _ _ _ τ ρ p1 p2 => 
                 Trans_case σ τ (ST σ τ p1) (subtypes_closure_ind σ τ p1)
                            ρ (ST τ ρ p2) (subtypes_closure_ind τ ρ p2)
             end) σ τ p')
@@ -203,12 +203,12 @@ Module Types (VAlpha : VariableAlphabet).
     Definition EqualTypesAreSubtypes_left: forall σ τ, σ ~= τ -> σ ≤ τ :=
       fun _ _ eqtys =>
         match eqtys with
-        | InducedEq _ _ l _ => l
+        | InducedEq l _ => l
         end.
     Definition EqualTypesAreSubtypes_right: forall σ τ, σ ~= τ -> τ ≤ σ :=
       fun _ _ eqtys => 
         match eqtys with
-        | InducedEq _ _ _ r => r
+        | InducedEq _ r => r
         end.
     Coercion EqualTypesAreSubtypes_left : EqualTypes >-> Subtypes.
     (*Coercion EqualTypesAreSubtypes_right : EqualTypes >-> Subtypes.*)
@@ -328,7 +328,7 @@ Module Types (VAlpha : VariableAlphabet).
       split; apply Inter_Proper_ST; assumption.
     Defined.
    
-    Instance Arr_Proper_ST : Proper (inverse (≤) ==> (≤) ==> (≤)) (→).
+    Instance Arr_Proper_ST : Proper (transp _ (≤) ==> (≤) ==> (≤)) (→).
     Proof.
       compute.
       intros * * p1.
@@ -561,7 +561,7 @@ Module Types (VAlpha : VariableAlphabet).
         forall σ τ ρ, ↓[σ] → [τ] ρ -> ρ ≤ σ → τ.
       Proof.
         intros σ τ ρ ρLEστ.
-        induction ρLEστ as [ | | | | * * ρ1 * ρ2 ].
+        induction ρLEστ as [ | | | | ].
         - transitivity ω.
           + exact OmegaTop.
           + apply (EqualTypesAreSubtypes_left).
@@ -801,7 +801,7 @@ Module Types (VAlpha : VariableAlphabet).
       Reserved Notation "↓[ σ ] τ" (at level 89).
       Fixpoint Ideal σ: IntersectionType -> Prop :=
         match σ with
-          | ω => fun _ => Ω ω
+          | Omega => fun _ => Ω ω
           | Var α => fun τ => ↓α[α] τ
           | σ' → τ' => fun τ => ↓[σ'] → [τ'] τ
           | σ' ∩ τ' => fun τ => (↓[σ'] τ) /\ (↓[τ'] τ)
@@ -810,7 +810,7 @@ Module Types (VAlpha : VariableAlphabet).
 
       Definition Filter σ: IntersectionType -> Prop :=
         match σ with
-          | ω => Ω
+          | Omega => Ω
           | _ => fun τ => ↓[τ] σ
         end.
       Notation "↑[ σ ] τ" := (Filter σ τ) (at level 89).
@@ -1994,8 +1994,10 @@ Module Types (VAlpha : VariableAlphabet).
 
    
   End SubtypeRelation.
+End Types.  
 
-  Module FCL.
+(*
+Module FCL.
     
     (*Variable Base : Set.*)
     Definition Base : Set := nat.
@@ -2360,7 +2362,7 @@ Module Types (VAlpha : VariableAlphabet).
             fill_ctxt σsp σsSound' (App cp N) σ ctxtp').
           { unfold ctxtp'.
             fold σsSound'.
-            reflexivity. }.
+            reflexivity. }
           rewrite <- fillEq in IH'.
           unfold fill_ctxt_step in ctxtEq'.
           set (IH'' := IH' ctxtEq').
@@ -2974,27 +2976,26 @@ Module Types (VAlpha : VariableAlphabet).
 
 
   End FCL.
-
+  
 End Types.
-
+*)
 Module HSTy.
-  Extraction Language Haskell.
   Module MachineIntVar <: VariableAlphabet.
     Axiom t : Set.
     Axiom eq_dec: forall α β : t, { α = β } + { ~ (α = β) }.
 
     Include HasUsualEq.
     Include UsualIsEq.
-    Extract Constant t => "GHC.Base.Int".
-    Extract Constant eq_dec => "(\ x y -> if x GHC.Base.== y then Specif.Coq_left else Specif.Coq_right)".
+    Extract Constant t => "Prelude.Int".
+    Extract Constant eq_dec => "(\ x y -> if x Prelude.== y then Left else Right)".
   End MachineIntVar.
 
   Module T := MachineIntVar <+ Types.
   Include T.
 End HSTy.
 
+
 Module OcamlTy.
-  Extraction Language Ocaml.
   Module MachineIntVar <: VariableAlphabet.
     Axiom t : Set.
     Axiom eq_dec: forall α β : t, { α = β } + { ~ (α = β) }.
@@ -3002,7 +3003,7 @@ Module OcamlTy.
     Include UsualIsEq.
 
     Extract Constant t => "int".
-    Extract Constant eq_dec => "(fun x y -> if x = y then Coq_left else Coq_right)".
+    Extract Constant eq_dec => "(fun x y -> if x = y then Left else Right)".
   End MachineIntVar.
 
   Module T := MachineIntVar <+ Types.
@@ -3027,5 +3028,9 @@ Module CoqExample.
   Definition ζ := (Var 6).
   
   Import NatVarTypes.SubtypeRelation.
-  Eval hnf in Subtype_decidable (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ)) (((α → β → ε) → δ) ∩ (ε → ζ)).
+  Example subtype_proof :=
+    Subtype_decidable (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ)) (((α → β → ε) → δ) ∩ (ε → ζ)).
+
+  (* Run this:  Eval compute in subtype_proof *)
 End CoqExample.
+
