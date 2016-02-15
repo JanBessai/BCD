@@ -1,0 +1,5 @@
+-R . BCD
+./Filter.v
+./ExtractHaskell.v
+./ExtractOcaml.v
+-extra-phony mrproper clean "rm -f *.hs *.ml *.mli"

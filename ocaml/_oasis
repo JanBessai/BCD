@@ -1,0 +1,21 @@
+Name: BCDSubtyping
+Version: 0.1
+Synopsis: A coq extracted BCD subtyping algorithm.
+Authors: Jan Bessai <jan.bessai@tu-dortmund.de>
+License: LGPL with OCaml linking exception 
+
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+
+Executable "bcd-benchmark"
+  Path: src/benchmark
+  MainIs: TestDriver.ml
+  CompiledObject: best
+  BuildDepends:
+    bcd-extracted, core_bench, threads
+
+Library "bcd-extracted"
+  Path: src/extracted
+  Modules: BCD
+
