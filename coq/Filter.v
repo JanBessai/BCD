@@ -8,9 +8,9 @@ Module Type VariableAlphabet <: UsualDecidableType :=
 
 Require Import Coq.Structures.Orders.
 Module Type OrderedVariableAlphabet <: UsualOrderedType :=
-  VariableAlphabet <+ HasLt <+ IsStrOrder <+ HasCompare.
+  VariableAlphabet <+ HasLt <+ IsStrOrder <+ HasCompare.  
 
- 
+
 Module Types (VAlpha : VariableAlphabet).
   Definition 𝕍 := VAlpha.t.
   Definition 𝕍_eq_dec: forall α β : 𝕍, { α = β } + { α <> β } := VAlpha.eq_dec.
@@ -1994,11 +1994,11 @@ Module Types (VAlpha : VariableAlphabet).
 
    
   End SubtypeRelation.
-End Types.  
+End Types.
 
-(*
-Module FCL.
-    
+Module Inhabitation (Variables : VariableAlphabet).
+    Module MyTypes := Variables <+ Types.
+    Import MyTypes.
     (*Variable Base : Set.*)
     Definition Base : Set := nat.
     Definition Ctxt : Type := Base -> IntersectionType.
@@ -2090,8 +2090,9 @@ Module FCL.
         + exact Mσ1σ2ρ1ρ2.
         + exact Nσ1σ2.
     Defined.
+End Inhabitation.
 
-
+(*
     Section Inhabitation.
       Require Import Logic.Decidable.
       
@@ -2116,7 +2117,8 @@ Module FCL.
         - rewrite (EqualTypesAreSubtypes_right _ _ τEqτ').
           trivial.
       Defined.
-  
+
+           
       Instance ST_Proper_Dec_FCL {Γ : Ctxt} {M : Term} : Proper ((~=) ==> (impl))  (fun τ => decidable (exists M, Γ ⊢ M : τ)).
       Proof.
         intros τ τ' τEqτ' decτ.
@@ -2135,6 +2137,46 @@ Module FCL.
           assumption.
       Defined.
 
+      Require Import Coq.Lists.Streams.
+
+      Inductive CanInhabit (Γ : Ctxt) (M : Term) (τ: IntersectionType): list IntersectionType -> Prop :=
+      | Done : Γ ⊢ M : τ -> CanInhabit Γ M τ nil
+      | Cons : forall σ l, CanInhabit Γ M (σ → τ) l -> CanInhabit Γ M τ (cons σ l).
+
+      Lemma CanInhabit_base_complete (Γ : Ctxt):
+        forall M τ, Γ ⊢ M : τ -> exists xArgs, CanInhabit Γ (TV (fst xArgs)) τ (snd xArgs) .
+      Proof.
+        intro M.
+        induction M as [ x | M' M'IH N NIH ].
+        - intros τ prf.
+          exists (x, nil).
+          apply Done.
+          exact prf.
+        - intros τ prf.
+          destruct (app_types _ _ _ _ prf) as [ σ [ prfM prfN ] ].
+          destruct (M'IH _ prfM) as [ [ x l ] canστ ].
+          exists (x, cons σ l).
+          exact (Cons _ _ _ _ _ canστ). 
+      Defined.
+
+      
+          
+      Fixpoint app_list (l: list Term) (M : Term) : Term :=
+        match l with
+          | nil => M
+          | cons N l' => app_list l' (App M N)
+        end.
+      
+      Definition CanInhabit (Γ : Ctxt) (σ : IntersectionType) (c: Base) := 
+        { σss : list (list IntersectionType) |   }
+      
+      
+      CoFixpoint pickTgts (Γ : Ctxt) (τ : IntersectionType): Stream (option { Mτ' : _  | Γ ⊢ (fst Mτ') : (snd Mτ') /\   })
+      
+      CoFixpoint inhabit (Γ : Ctxt) (τ : IntersectionType): Stream (option { M : _ | Γ ⊢ M : τ }).
+      
+
+      
       Fixpoint proofContext (Γ : Ctxt) (M : Term) (τ : IntersectionType) (σs : list IntersectionType) {struct σs} : Set :=
         match σs with
           | nil => Γ ⊢ M : τ
