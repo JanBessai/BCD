@@ -977,6 +977,33 @@ Module Types (VAlpha : VariableAlphabet).
         assumption.
       Defined.
 
+      Lemma Ideal_directed:
+        forall σ τ ρ, ↓[σ] τ -> ↓[σ] ρ -> (↓[σ] σ) /\ (τ ≤ σ) /\ (ρ ≤ σ).
+      Proof.
+        intro σ.
+        induction σ as [ | | σ₁ IHσ₁ σ₂ IHσ₂ | ]; intros τ ρ στ σρ.
+        - apply VariableIdeal_directed; assumption.
+        - apply ArrowIdeal_directed; assumption.
+        - destruct (IHσ₁ _ _ (proj1 στ) (proj1 σρ)) as [ _ [τσ₁ ρσ₁] ].
+          destruct (IHσ₂ _ _ (proj2 στ) (proj2 σρ)) as [ _ [τσ₂ ρσ₂] ].
+          split; [ | split ].
+          + reflexivity.
+          + apply Inter_both; assumption.
+          + apply Inter_both; assumption.
+        - split; [ | split ]; solve [ auto with SubtypeHints ].
+      Qed.
+
+      Lemma Filter_directed:
+        forall σ τ ρ, ↑[σ] τ -> ↑[σ] ρ -> (↑[σ] σ) /\ (σ ≤ τ) /\ (σ ≤ ρ).
+      Proof.
+        intros σ τ ρ στ σρ.
+        destruct (Ideal_directed τ σ σ (Filter_Ideal _ _ στ) (Filter_Ideal _ _ στ))
+          as [ _ [ στ' _ ] ].
+        destruct (Ideal_directed ρ σ σ (Filter_Ideal _ _ σρ) (Filter_Ideal _ _ σρ))
+          as [ _ [ σρ' _ ] ].        
+        split; [ | split ]; auto using reflexivity.
+      Qed.
+        
       Require Import Logic.Decidable.
       Fact Ω_decidable: forall τ, { Ω τ } + { ~(Ω τ) }.
       Proof.
@@ -1487,6 +1514,8 @@ Module Types (VAlpha : VariableAlphabet).
           assumption.
       Defined.
 
+      
+
       Inductive tgt : IntersectionType -> IntersectionType -> Prop :=
         | tgt_Id : forall τ, tgt τ τ
         | tgt_Arr : forall σ τ ρ, tgt τ ρ -> tgt (σ → τ) ρ
@@ -1626,56 +1655,109 @@ Module Types (VAlpha : VariableAlphabet).
         - inversion pτ.
       Qed.
 
-      Fact tgt_organized:
-        forall σ τ, Organized τ -> exists τ', (Organized τ') /\ ((σ → τ) ~= τ').
+      Fact organized_inter: forall σ τ, Organized (σ ∩ τ) -> Organized σ /\ Organized τ.
       Proof.
-        intros σ τ orgτ.
-        induction orgτ as [ | τ1 τ2 pathτ1 orgτ2 [ τ' [ orgτ' τ'Eq ] ] ].
-        - exists (σ → τ).
+        intros σ τ orgστ.
+        inversion orgστ as [ στ pathστ | σ' τ' pathσ' orgτ' ].
+        - inversion pathστ.
+        - split.
+          + apply Organized_Path.
+            assumption.
+          + assumption.
+      Qed.
+
+      Fact inter_organized:
+        forall σ τ, Organized σ -> Organized τ ->
+               { στ : _ | Organized στ /\ ((σ ∩ τ) ~= στ) }.
+      Proof.
+        intro σ.
+        induction σ as [ α | σ' IHσ' τ' IHτ' | σ₁ IHσ₁ σ₂ IHσ₂ | ];
+          intros τ orgσ orgτ.
+        - exists ((Var α) ∩ τ).
+          split.
+          + apply Organized_Inter.
+            * apply Path_Var.
+            * assumption.
+          + reflexivity.
+        - exists ((σ' → τ') ∩ τ).
+          split.
+          + apply Organized_Inter.
+            * inversion orgσ; assumption.
+            * assumption.
+          + reflexivity.
+        - destruct (IHσ₂ _ (proj2 (organized_inter _ _ orgσ)) orgτ)
+            as [ σ₂τ [ orgσ₂τ σ₂τ_eq ]].
+          exists (σ₁ ∩ σ₂τ).
+          split.
+          + apply Organized_Inter.
+            * inversion orgσ as [ σ' pathσ' | ].
+              { inversion pathσ'. }
+              { assumption. }
+            * assumption.
+          + rewrite associativity.
+            rewrite σ₂τ_eq.
+            reflexivity.
+        - contradict orgσ.
+          unfold not; intro orgσ.
+          inversion orgσ as [ σ' pathσ' | ].
+          inversion pathσ'.
+      Defined.
+          
+      Fact tgt_organized:
+        forall σ τ, Organized τ -> { τ' : _ | (Organized τ') /\ ((σ → τ) ~= τ') }.
+      Proof.
+        intros σ τ.
+        revert σ.
+        induction τ as [ α | σ' IHσ' τ' IHτ' | τ₁ IHτ₁ τ₂ IHτ₂ | ];
+          intros σ orgτ.
+        - exists (σ → Var α).
           split.
           + apply Organized_Path.
             apply Path_Arr.
+            apply Path_Var.
+          + reflexivity.
+        - exists (σ → σ' → τ').
+          split.
+          + apply Organized_Path.
+            inversion orgτ as [ τ pathτ | ].
+            apply Path_Arr.
             assumption.
           + reflexivity.
-        - exists ((σ → τ1) ∩ τ').
+        - destruct (IHτ₁ σ (proj1 (organized_inter _ _ orgτ)))
+            as [ στ₁ [ orgστ₁ στ₁_eq ] ].
+          destruct (IHτ₂ σ (proj2 (organized_inter _ _ orgτ)))
+            as [ στ₂ [ orgστ₂ στ₂_eq ] ].
+          destruct (inter_organized _ _ orgστ₁ orgστ₂)
+            as [ στ₁τ₂ [ orgστ₁τ₂ στ₁τ₂_eq ] ].
+          exists στ₁τ₂.
           split.
-          + apply Organized_Inter.
-            * apply Path_Arr.
-              assumption.
-            * assumption.
-          + rewrite <- τ'Eq.
-            split.
-            * apply (transitivity (InterIdem)).
-              apply SubtyDistrib; 
-                apply CoContra;
-                auto with SubtypeHints;
-                reflexivity.
-            * auto with SubtypeHints.
-      Defined.
+          + assumption.
+          + split.
+            * transitivity ((σ → τ₁) ∩ (σ → τ₂)).
+              { apply Inter_both.
+                - apply CoContra.
+                  + reflexivity.
+                  + apply InterMeetLeft.
+                - apply CoContra.
+                  + reflexivity.
+                  + apply InterMeetRight.
+              }
+              { rewrite στ₁_eq.
+                rewrite στ₂_eq.
+                rewrite στ₁τ₂_eq.
+                reflexivity. }
+            * rewrite <- στ₁τ₂_eq.
+              rewrite <- στ₁_eq.
+              rewrite <- στ₂_eq.
+              apply InterDistrib.
+        - contradict orgτ.
+          unfold not; intro orgτ.
+          inversion orgτ as [ τ' pathτ' | ]; inversion pathτ'.
+      Qed.
 
-      Fact merge_organized:
-        forall ρ1, Organized ρ1 ->
-        forall ρ2, Organized ρ2 -> 
-        exists τ, Organized τ /\ (ρ1 ∩ ρ2 ~= τ).
-      Proof.
-        intros ρ1 orgρ1.
-        induction orgρ1 as [ τ pathτ | σ τ pathσ orgτ IH ];
-          intros ρ2 orgρ2.
-        - exists (τ ∩ ρ2).
-          split.
-          + apply Organized_Inter; assumption.
-          + reflexivity.
-        - case (IH ρ2 orgρ2) as [ τ' [ orgτ' τ'Eq ] ].
-          exists (σ ∩ τ').
-          split.
-          + apply Organized_Inter; assumption.
-          + rewrite <- τ'Eq.
-            rewrite associativity.
-            reflexivity.
-      Defined.
-
+     
       Definition organization_lemma: 
-        forall τ, (τ ~= ω) \/ (exists τ', Organized τ' /\ (τ ~= τ')).
+        forall τ, (τ ~= ω) + ({ τ': _ | Organized τ' /\ (τ ~= τ') }).
       Proof.
         intros τ.
         induction τ as [ α | σ IHσ τ IHτ | ρ1 IHρ1 ρ2 IHρ2 | ].
@@ -1722,7 +1804,7 @@ Module Types (VAlpha : VariableAlphabet).
               rewrite identity_right at 1.
               reflexivity.
           + right.
-            case (merge_organized _ orgτ'1 _ orgτ'2) as [ τ' [ τ'org τ'Eq ] ].
+            case (inter_organized _ _ orgτ'1 orgτ'2) as [ τ' [ τ'org τ'Eq ] ].
             exists τ'.
             split.
             * assumption.
@@ -1952,7 +2034,7 @@ Module Types (VAlpha : VariableAlphabet).
         Organized σ ->
         Path τ ->
         σ ≤ τ ->
-        exists τ', InOrganized σ τ' /\ (τ' ≤ τ).
+        { τ' | InOrganized σ τ' /\ (τ' ≤ τ) }.
       Proof.
         intro σ.
         induction σ as [ α | σ' IHσ' τ' | ρ1 IHρ1 ρ2 IHρ2 | ]; intros τ oσ pτ σLEτ.
@@ -1972,35 +2054,42 @@ Module Types (VAlpha : VariableAlphabet).
             - right.
               assumption.
             - assumption. }
-          case ρ1Orρ2LEτ as [ρ1LEτ | ρ2LEτ].
+          destruct (Subtype_decidable ρ1 τ) as [ρ1LEτ | ρ1NLEτ ].
           + exists ρ1.
             split.
             * apply InOrg_Here.
               assumption.
             * assumption.
-          + inversion oσ as [ ? pρ1ρ2 | ? ? ? orgρ2 ].
-            * inversion pρ1ρ2.
-            * case (IHρ2 τ orgρ2 pτ ρ2LEτ) as [ τ' [inorgρ2τ' τ'LEτ] ].
-              exists τ'.
-              split.
-              { apply InOrg_There.
-                assumption. }
-              { assumption. }
-        - inversion oσ as [ ? pω |].
+          + assert (ρ2LEτ : ρ2 ≤ τ).
+            { destruct ρ1Orρ2LEτ as [ ρ1LEτ | ].
+              - contradict ρ1LEτ; assumption.
+              - assumption.
+            }
+            case (IHρ2 τ (proj2 (organized_inter _ _ oσ)) pτ ρ2LEτ)
+              as [ τ' [inorgρ2τ' τ'LEτ] ].
+            exists τ'.
+            split.
+            * apply InOrg_There.
+              assumption.
+            * assumption.
+        - contradict oσ.
+          unfold not; intro oσ.
+          inversion oσ as [ ? pω |].
           inversion pω.
       Defined.
-
+  
     End BetaLemmas.
 
    
   End SubtypeRelation.
 End Types.
-
+(*
 Module Inhabitation (Variables : VariableAlphabet).
     Module MyTypes := Variables <+ Types.
     Import MyTypes.
-    (*Variable Base : Set.*)
-    Definition Base : Set := nat.
+    Variable Base_Cardinality: nat.
+    Require Import Coq.Vectors.Fin.
+    Definition Base : Set := t Base_Cardinality.
     Definition Ctxt : Type := Base -> IntersectionType.
    
     Inductive Term: Set :=
@@ -2011,7 +2100,7 @@ Module Inhabitation (Variables : VariableAlphabet).
 
     Import SubtypeRelation.
     Reserved Notation "Γ '⊢' M : τ" (at level 90, M at level 19, no associativity).
-    Inductive FCL (Γ : Ctxt) : Term -> IntersectionType -> Prop :=
+    Inductive FCL (Γ : Ctxt) : Term -> IntersectionType -> Type :=
       | FCL_Var : forall x τ, τ = Γ(x) -> Γ ⊢ x : τ
       | FCL_MP : forall M N σ τ, Γ ⊢ M : σ → τ -> Γ ⊢ N : σ -> Γ ⊢ (App M N) : τ
       | FCL_ST : forall M σ τ, Γ ⊢ M : σ -> σ ≤ τ -> Γ ⊢ M : τ
@@ -2020,7 +2109,7 @@ Module Inhabitation (Variables : VariableAlphabet).
 
     Fact app_types Γ : 
       forall M N τ, Γ ⊢ (App M N) : τ ->
-      exists σ, (Γ ⊢ M : σ → τ) /\ (Γ ⊢ N : σ).
+      { σ : _ & (prod (Γ ⊢ M : σ → τ) (Γ ⊢ N : σ)) }.
     Proof.
       intros M N τ MNτ.
       remember (App M N) eqn:MNEq.
@@ -2090,13 +2179,21 @@ Module Inhabitation (Variables : VariableAlphabet).
         + exact Mσ1σ2ρ1ρ2.
         + exact Nσ1σ2.
     Defined.
-End Inhabitation.
-
 (*
-    Section Inhabitation.
+    
+    
+    Definition Step:
+      forall Γ τ, { rhs: list (Base * list IntersectionType) |
+               { M : _ | Γ ⊢ M : τ } -> 
+*)    
+    
+(*End Inhabitation.
+
+
+    Section Inhabitation.*)
       Require Import Logic.Decidable.
       
-      
+      (*
       Require Import Classes.Morphisms.
       Require Import Coq.Program.Basics.
       Instance ST_Proper_FCL {Γ : Ctxt} {M : Term} : Proper ((≤) ==> (impl)) (FCL Γ M).
@@ -2136,28 +2233,117 @@ End Inhabitation.
           rewrite τEqτ'.
           assumption.
       Defined.
-
+*)
       Require Import Coq.Lists.Streams.
 
-      Inductive CanInhabit (Γ : Ctxt) (M : Term) (τ: IntersectionType): list IntersectionType -> Prop :=
+      Inductive CanInhabit (Γ : Ctxt) (M : Term) (τ: IntersectionType): list IntersectionType -> Type :=
       | Done : Γ ⊢ M : τ -> CanInhabit Γ M τ nil
       | Cons : forall σ l, CanInhabit Γ M (σ → τ) l -> CanInhabit Γ M τ (cons σ l).
 
+      Fixpoint leftmost (M : Term): Base :=
+        match M with
+          | (TV x) => x
+          | (App M' N) => leftmost M'
+        end.
+      
       Lemma CanInhabit_base_complete (Γ : Ctxt):
-        forall M τ, Γ ⊢ M : τ -> exists xArgs, CanInhabit Γ (TV (fst xArgs)) τ (snd xArgs) .
+        forall M τ, Γ ⊢ M : τ -> { σs :_ & CanInhabit Γ (TV (leftmost M)) τ σs }.
       Proof.
         intro M.
         induction M as [ x | M' M'IH N NIH ].
         - intros τ prf.
-          exists (x, nil).
+          exists nil.
           apply Done.
           exact prf.
         - intros τ prf.
           destruct (app_types _ _ _ _ prf) as [ σ [ prfM prfN ] ].
-          destruct (M'IH _ prfM) as [ [ x l ] canστ ].
-          exists (x, cons σ l).
+          destruct (M'IH _ prfM) as [ l canστ ].
+          exists (cons σ l).
           exact (Cons _ _ _ _ _ canστ). 
       Defined.
+      Require Import Coq.Lists.List.
+      Import EqNotations.
+      Lemma fin_list: forall n, { up_to : list (t n) | forall fn, In fn up_to }.
+      Proof.
+        intro n.
+        induction n.
+        - exists nil.
+          intro fn.
+          inversion fn.
+        - destruct IHn as [ l prf ].
+          exists (cons F1 (map FS l)).
+          intro fn.
+          revert n fn l prf.
+          refine (@Fin.caseS _ _ _); intros.
+          + left. exact eq_refl.
+          + right. apply in_map. exact (prf p).
+      Defined.
+
+      Fixpoint fin_list' (n : nat): list (t n) :=
+        match n with
+          | 0 => nil
+          | S n' => cons F1 (map FS (fin_list' n'))
+        end.
+
+      Lemma fin_list'_complete {n : nat}: forall fn, In fn (fin_list' n).
+      Proof.
+        induction n as [ | n' IH ].
+        - intro fn; inversion fn.
+        - intro fn.
+          remember (S n') as sn' eqn:sn'_eq.
+          destruct fn eqn:fn_eq.
+          + left. exact eq_refl.
+          + right.
+            inversion sn'_eq as [n_eq].
+            rewrite <- n_eq in IH.
+            apply in_map.
+            exact (IH t).
+      Defined.
+
+      
+   
+      Fixpoint Candidates' (Γ : Ctxt) (x : Base) (σ : IntersectionType) (σs : list IntersectionType) {struct σ}: CanInhabit Γ (TV x) σ σs -> list { τσs : _ & CanInhabit Γ (TV x) (fst τσs) (snd τσs) } := 
+        match σ as σ'' with
+          | σ' → τ => fun xσ => cons (existT _ (τ, cons σ' σs) (Cons _ _ τ σ' σs xσ)) (Candidates' Γ x τ (cons σ' σs) (Cons _ _ τ σ' σs xσ))
+          | 
+          | σ' => fun xσ => cons (existT _ (σ', σs) xσ) nil
+        end.
+      
+     
+            
+      Definition Candidates (Γ : Ctxt):
+        forall τ, list { xσs : _ & CanInhabit Γ (TV (fst xσs)) τ (snd xσs) }.
+      Proof.
+        induction (fin_list' Base_Cardinality).
+        - intro. exact nil.
+        - intro τ.
+          induction (Γ a) as [ α | .
+          + 
+          
+          | forall M (prf: Γ ⊢ M : τ),
+              In (leftmost M) (map (fun c => fst (projT1 c)) candidates) /\
+              In (projT1 (CanInhabit_base_complete Γ M τ prf))
+                 (map (fun c => snd (projT1 c)) candidates) }.
+      Proof.
+        remember (fin_list'_complete (n := Base_Cardinality)) as cand_complete.
+        induction (fin_list' Base_Cardinality).
+        - intros.
+          exists nil.
+          intro M.
+          contradict M. {
+            intro M.
+            induction M as [ x | M MIH N NIH ].
+            - unfold Base in x.
+              set (incs := fin_list'_complete (n := Base_Cardinality)).
+              rewrite cand_eq  in incs.
+              apply incs.
+              assumption.
+            - assumption.
+          }
+        - intro τ.
+          contradict prf.
+          
+      
 
       
           
@@ -2498,7 +2684,8 @@ End Inhabitation.
           + apply in_rev.
             assumption.
       Defined.
-(*
+
+      (*
       Fact foo: forall Γ n σs σ,
         n = length (σs ++ [σ] ) -> 
         forall τ M σsSound ctxt N Nσ,
@@ -3021,35 +3208,6 @@ End Inhabitation.
   
 End Types.
 *)
-Module HSTy.
-  Module MachineIntVar <: VariableAlphabet.
-    Axiom t : Set.
-    Axiom eq_dec: forall α β : t, { α = β } + { ~ (α = β) }.
-
-    Include HasUsualEq.
-    Include UsualIsEq.
-    Extract Constant t => "Prelude.Int".
-    Extract Constant eq_dec => "(\ x y -> if x Prelude.== y then Left else Right)".
-  End MachineIntVar.
-
-  Module T := MachineIntVar <+ Types.
-  Include T.
-End HSTy.
-
-
-Module OcamlTy.
-  Module MachineIntVar <: VariableAlphabet.
-    Axiom t : Set.
-    Axiom eq_dec: forall α β : t, { α = β } + { ~ (α = β) }.
-    Include HasUsualEq.
-    Include UsualIsEq.
-
-    Extract Constant t => "int".
-    Extract Constant eq_dec => "(fun x y -> if x = y then Left else Right)".
-  End MachineIntVar.
-
-  Module T := MachineIntVar <+ Types.
-End OcamlTy.
 
 Module CoqExample.
   Module NatVar <: VariableAlphabet.
@@ -3070,9 +3228,20 @@ Module CoqExample.
   Definition ζ := (Var 6).
   
   Import NatVarTypes.SubtypeRelation.
-  Example subtype_proof :=
-    Subtype_decidable (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ)) (((α → β → ε) → δ) ∩ (ε → ζ)).
 
+  Example pick_ideal: IntersectionType.
+  Proof.
+    set (τ := (β → γ ∩ α) ∩ (δ → ε ∩ α)).
+    eapply proj1_sig.
+    apply (Pick_Ideal δ τ (fun σ' p => Filter_decidable δ σ')). 
+  Defined.
+    
+  Example subtype_proof :=
+    Subtype_decidable
+      (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ))
+      (((α → β → ε) → δ) ∩ (ε → ζ)).
+
+   
   (* Run this:  Eval compute in subtype_proof *)
 End CoqExample.
 
