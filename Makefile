@@ -21,7 +21,6 @@ haskell/src/BCD.hs: coq/BCD.hs
 haskell: haskell/src/BCD.hs
 	$(MAKE) -C haskell all
 
-
 ocaml/src/extracted/BCD.ml: coq/BCD.ml coq/BCD.mli
 	cp coq/BCD.ml coq/BCD.mli ocaml/src/extracted/
 
