@@ -1496,7 +1496,7 @@ Module Types (VAlpha : VariableAlphabet).
                | intros; apply Ω_decidable ].
       Defined.
 
-      Corollary Subtype_decidable:
+      Corollary decide_subtypes:
         forall σ τ, { σ ≤ τ } + { ~(σ ≤ τ) }.
       Proof.
         intros.
@@ -1929,8 +1929,8 @@ Module Types (VAlpha : VariableAlphabet).
             * right.
               apply Path_Arr.
               assumption.
-        - case (Subtype_decidable ρ1 ρ2);
-            [|case (Subtype_decidable ρ2 ρ1)].
+        - case (decide_subtypes ρ1 ρ2);
+            [|case (decide_subtypes ρ2 ρ1)].
           + intro ρ1LEρ2.
             assert (primecond :
               (forall ρ1' ρ2', ↓[ρ1] (ρ1' ∩ ρ2') -> (ρ1' ≤ ρ1) \/ (ρ2' ≤ ρ1))).
@@ -2064,7 +2064,7 @@ Module Types (VAlpha : VariableAlphabet).
               assumption.
             - apply Ideal_principalElement.
               assumption. }
-          destruct (Subtype_decidable ρ1 τ) as [ρ1LEτ | ρ1NLEτ ].
+          destruct (decide_subtypes ρ1 τ) as [ρ1LEτ | ρ1NLEτ ].
           + exists ρ1.
             split.
             * apply InOrg_Here.
@@ -2122,12 +2122,12 @@ Module CoqExample.
   Defined.
 
   Example subtype_proof :=
-    Subtype_decidable
+    decide_subtypes
       (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ) ∩ (ε → α))
       (((α → β ∩ ε) → δ) ∩ (ε → ζ ∩ α)).
 
   Example non_subtype_proof :=
-    Subtype_decidable
+    decide_subtypes
       (((α → β) → δ) ∩ ((α → γ) → δ) ∩ (ε → ζ) ∩ (ε → α))
       (((α → β → ε) → δ) ∩ (ε → ζ ∩ α)).
   
