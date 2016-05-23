@@ -71,11 +71,6 @@ worstCase n =
 instance Generic BCD.IntersectionType
 instance NFData BCD.IntersectionType where rnf x = seq x ()
 
-deriving instance Show BCD.Sumbool
-instance Generic BCD.Sumbool
-instance NFData BCD.Sumbool where rnf x = seq x ()
-
-
 setupEnv :: IO [(Int, [(BCD.IntersectionType, BCD.IntersectionType) ])]
 setupEnv = do
   tysLeft <- generate $ benchData 1 10 200
@@ -112,8 +107,8 @@ timeIt action arg = do
 
 main :: IO ()
 main = do
-  let tys = replicate 100 (worstCase 200)
-  {-(t, r) <- timeIt (map (uncurry BCD.subtype_decidable)) tys
+  {-let tys = replicate 100 (worstCase 200)
+  (t, r) <- timeIt (map (uncurry BCD.subtype_decidable)) tys
   print t
   print (head r)
   print . (\ (l, r) -> max (measure l) (measure r) ) . head $ tys -}
@@ -121,7 +116,7 @@ main = do
     [ env setupWorstCaseEnv $ \ tys ->
         bgroup "worst case subtyping" $
           (bench "dummy" $ whnf (+ 1) 1) :
-            map (\ (n, tysn) -> bench ("type_size_" ++ show n) $ nf subtypes tysn) tys
+            map (\ (n, tysn) -> bench ("type_size_" ++ show n) $ nf subtypes tysn) [last tys]
     {-env setupEnv $ \ ~tys ->
       bgroup "subtyping" $
         (bench "dummy" $ whnf (+ 1) 1) :  

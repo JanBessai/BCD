@@ -19,10 +19,10 @@ executable hsint
   main-is:             TestDriver.hs
   hs-source-dirs:      src
   ghc-options:
-    -O2
+    -O2  -fstatic-argument-transformation 
   -- other-modules:       
   other-extensions:    TemplateHaskell, DeriveDataTypeable, StandaloneDeriving, DeriveGeneric
-  build-depends:       base >=4.7 && <4.9, deepseq >=1.4, time-exts <=2.1 && >1.4, QuickCheck >=2.8 && <2.9, criterion >=1.1.0.0
+  build-depends:       base >=4.7 && <4.9, deepseq >=1.4, time-exts <=2.1 && >1.4, QuickCheck >=2.8 && <2.9, criterion >=1.1.0.0, ghc-prim >= 0.4.0.0
 
   -- hs-source-dirs:      
   default-language:    Haskell2010
