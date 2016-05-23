@@ -31,6 +31,11 @@ ocaml/Makefile: ocaml/src/extracted/BCD.ml
 ocaml: ocaml/Makefile
 	$(MAKE) -C ocaml all
 
+.PHONY: microbenchmark
+microbenchmark: haskell/dist/build/hsint/hsint ocaml/_build/src/benchmark/TestDriver.native 
+	./ocaml/_build/src/benchmark/TestDriver.native
+	./haskell/dist/build/hsint/hsint
+
 .PHONY: clean
 clean:
 	$(MAKE) -C coq mrproper 

@@ -115,7 +115,7 @@ main = do
   defaultMain 
     [ env setupWorstCaseEnv $ \ tys ->
         bgroup "worst case subtyping" $
-          (bench "dummy" $ whnf (+ 1) 1) :
+            (bench "dummy" $ whnf (+ 1) 1) :
             map (\ (n, tysn) -> bench ("type_size_" ++ show n) $ nf subtypes tysn) [last tys]
     {-env setupEnv $ \ ~tys ->
       bgroup "subtyping" $
@@ -123,5 +123,5 @@ main = do
         map (\ (n, tysn) -> bench ("type_size_" ++ show n) $ nf (map subtypes) tysn) tys -}
     ]
   where
-    subtypes = uncurry $ BCD.subtype_decidable
+    subtypes = uncurry $ BCD.decide_subtypes
   
