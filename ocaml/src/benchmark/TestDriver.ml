@@ -32,7 +32,7 @@ let rec ty_size ty =
 let worstCaseTest = 
   let (x, y) = worstCase 200 in
   let foo = printf "%d %d\n" (ty_size x) (ty_size y) in
-  Bench.Test.create ~name:(sprintf "worstcase %d" (ty_size y)) (fun () -> coq_Subtype_decidable x y)
+  Bench.Test.create ~name:(sprintf "worstcase %d" (ty_size y)) (fun () -> decide_subtypes x y)
 
 open Core
 let () =
